@@ -1,0 +1,52 @@
+{
+  "paging": {"total": 3, "offset": 0, "limit": 50},
+  "results": [
+    {
+      "id": "MLB5299585130",
+      "title": "Monitor Gamer LG UltraGear 32GN600 32\" VA QHD 165Hz",
+      "seller_id": 123456789,
+      "price": 1329.00,
+      "original_price": 2180.00,
+      "condition": "new",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_example.jpg",
+      "official_store_id": 1234,
+      "shipping": {"free_shipping": true},
+      "warranty": "12 meses de garantia de fábrica",
+      "sale_price": {
+        "amount": 1329.00,
+        "regular_amount": 2180.00,
+        "currency_id": "BRL"
+      }
+    },
+    {
+      "id": "MLB9876543210",
+      "title": "Monitor Gamer LG UltraGear 32GN600 32\" VA QHD 165Hz",
+      "seller_id": 987654321,
+      "price": 1450.00,
+      "original_price": null,
+      "condition": "new",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_example2.jpg",
+      "official_store_id": null,
+      "shipping": {"free_shipping": false},
+      "warranty": null,
+      "sale_price": {
+        "amount": 1450.00,
+        "regular_amount": null,
+        "currency_id": "BRL"
+      }
+    },
+    {
+      "id": "MLB1111111111",
+      "title": "Monitor Gamer LG UltraGear 32GN600 32\" VA QHD 165Hz",
+      "seller_id": 111111111,
+      "price": 1200.00,
+      "original_price": null,
+      "condition": "used",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_example3.jpg",
+      "official_store_id": null,
+      "shipping": {"free_shipping": true},
+      "warranty": null,
+      "sale_price": null
+    }
+  ]
+}

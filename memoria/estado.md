@@ -12,5 +12,11 @@
 - Fluxo de design definido: Paper → aprovação → implementação
 ## Pendente
 - Atualizar seção de logo do brand board no Paper (limite semanal atingido)
-## Próximo
-- Estruturar projeto Python e começar implementação do bot
+## Sprint atual
+- Semana 1 (até 08/11): modelo de dados + coletor de preços ML rodando e guardando histórico
+- **Feito:** schema Alembic, models SQLAlchemy, verdict.py, best_offer.py, PriceSource (ABC + MLCatalogSource + MockSource), 27 testes passando
+- **Próximo:** subir Docker Postgres, rodar migração, coletor agendado com dados reais
+## Plano até Black Friday
+- Semana 2 (até 15/11): bot Telegram — /adicionar /lista /remover + alerta de preço-alvo
+- Semana 3 (até 22/11): veredito real/maquiado, testes, bot rodando 24/7
+- Pós-BF: telas no Paper, dashboard, landing, deploy, README

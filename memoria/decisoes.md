@@ -1,8 +1,23 @@
 # Decisões
 - Stack de IA: só Claude Code + Paper + Obsidian (sem Codex)
 - MVP: bot Telegram pessoal, só Mercado Livre. Comandos /adicionar /lista /remover, alerta de preço-alvo, histórico de preços
-- Stack MVP: Python + python-telegram-bot + SQLite
-- Prazo: funcionando antes da Black Friday (2026-11-27)
+- Stack MVP: Python + python-telegram-bot + PostgreSQL 16 (Docker) + SQLAlchemy 2 + Alembic
+- Tipos monetários: NUMERIC(12,2) no banco, Decimal no Python. Nunca float
+- Datas: TIMESTAMPTZ no banco, exibição America/Sao_Paulo
+- Prazo: núcleo funcionando antes da Black Friday (2026-11-27), monitorar 2 produtos reais
+- Plano de sprints: S1 (08/11) dados+coletor | S2 (15/11) bot Telegram | S3 (22/11) veredito+testes+24/7 | pós-BF telas/deploy
+- Corte de escopo, não de qualidade: testes desde o início são obrigatórios
+- Coleta de preços: 1h normal, 15-30min de 23 a 27/11 (Black Friday). Multiget /items?ids= até 20 IDs por chamada
+- DESCOBERTA (2026-11-02): /sale_price, /prices, /items, /search retornam 403 para anúncios de terceiros. MAS /products/{id}/items retorna 200 com price, original_price, seller_id, item_id, condition, official_store_id, shipping
+- Scraping descartado: viola cláusula 7.6 dos Termos de Desenvolvedores e o projeto será público. Serviços terceiros de scraping também descartados
+- Fonte de preço MVP: /products/{id}/items (endpoint de catálogo). Só links de catálogo (/p/MLB...) aceitos. Links de anúncio avulso: bot avisa que precisa ser link de catálogo
+- Interface PriceSource aprovada: ABC desacoplando fonte de preço do resto do sistema. MLCatalogSource para MVP, Amazon Creators API para Fase 2
+- Tabela offer_snapshots: todas as ofertas de cada coleta. price_history guarda a melhor oferta (derivada)
+- Melhor oferta: menor preço entre condition=new. Filtros configuráveis: exigir garantia, preferir loja oficial. Alerta avisa se sem garantia
+- Disponibilidade: produto disponível = existe pelo menos 1 oferta válida na coleta
+- Veredito: função pura em módulo próprio. Limites configuráveis (5%, 10%, 7d, 14d). Todo alerta carrega veredito
+- Maquiado: original_price > mediana_30d * 1.10 OU preço subiu >10% nos 14d antes da queda
+- Excluir coletas com available=false de todos os cálculos de veredito
 - Fase 2: site com landing page + painel, design no Paper, publicar GitHub/LinkedIn
 - Direção visual: Signage (editorial) + Onyx (disciplina brutalista). Preto e tipo fazem o trabalho
 - Cor de acento: Forest #1B6B3A — só desconto verificado como real. Verde é conquistado, não decorativo
