@@ -4,3 +4,13 @@
 - Stack MVP: Python + python-telegram-bot + SQLite
 - Prazo: funcionando antes da Black Friday (2026-11-27)
 - Fase 2: site com landing page + painel, design no Paper, publicar GitHub/LinkedIn
+- Direção visual: Signage (editorial) + Onyx (disciplina brutalista). Preto e tipo fazem o trabalho
+- Cor de acento: Forest #1B6B3A — só desconto verificado como real. Verde é conquistado, não decorativo
+- Ocre #7A5A10 só para veredito "segura" (maquiado). Sem vermelho em lugar nenhum
+- Tipografia: Archivo 900 (display, uppercase), Libre Franklin 400/600 (corpo), IBM Plex Mono 500/700 (dados/preços)
+- Radius 0, sem gradientes, sem glassmorphism, sem Inter, sem amarelo/laranja/roxo gradiente
+- Fluxo de design: toda tela é desenhada no Paper (seguindo branding board) → aprovação do Lucas → implementação. Nenhuma tela sem design aprovado
+- Telas previstas (Fase 2): landing page, login/cadastro, onboarding (conectar Telegram), dashboard, mensagens do bot
+- Logo: wordmark "LOWPOINT." (Archivo Black 900 + ponto Forest). Duplo sentido: ponto = point + ponto final
+- Avatar Telegram: monograma "L." branco sobre círculo Ink, ponto Forest
+- Elemento secundário: ponto Forest isolado em círculo Ink — usar em favicon, loading, hero SVG

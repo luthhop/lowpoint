@@ -51,3 +51,17 @@ Segurança com vantagem. "Posso confiar e agir sem medo de estar sendo enganado.
 ## Roadmap
 - **MVP (até 2026-11-27):** Bot Telegram, Python + python-telegram-bot + SQLite, uso pessoal
 - **Fase 2:** Site com landing page + painel, design no Paper, publicar GitHub/LinkedIn
+
+## Telas previstas (Fase 2)
+1. Landing page
+2. Login / cadastro
+3. Onboarding (conectar o Telegram)
+4. Dashboard (produtos monitorados, histórico de preço, veredito)
+5. Aparência das mensagens do bot
+
+## Fluxo de design
+Todo UI/UX do frontend é desenhado no Paper antes de ser implementado, seguindo o branding board. Nenhuma tela é implementada sem design aprovado.
+
+1. Desenhar no Paper
+2. Aprovação do Lucas
+3. Implementação seguindo o design

@@ -3,8 +3,14 @@
 ## Nome
 **Lowpoint** — "o ponto mais baixo", o menor preço histórico. Palavras reais em inglês, curtas, juntas, soando como marca única (referências: Spotify, Money Flow).
 
-## Logo (direção)
-Linha de gráfico de preço descendo até um ponto — o lowpoint.
+## Logo
+**LOWPOINT.** — wordmark em Archivo Black 900 uppercase + ponto Forest (#1B6B3A) como período final. Duplo sentido em português: "ponto" é o "point" do nome (o ponto mais baixo do preço) e o ponto final da frase (veredito dado, encerrado). "LOWPOINT." = o menor preço, e ponto final. O ponto verde é conquistado — só aparece quando o desconto é real.
+
+### Avatar (Telegram)
+**L.** — monograma L em Archivo Black branco sobre círculo Ink (#0A0A0A), com ponto Forest grande como período. Legível em 32px e 64px.
+
+### Elemento secundário
+**Ponto isolado** — ponto Forest grande posicionado embaixo ("low point") dentro de círculo Ink. Usar em: favicon, loading/spinner, animação do hero SVG do README. Não é logo, é elemento da marca.
 
 ## Personalidade
 O amigo desconfiado que confere tudo antes de você gastar. Fala direto, com números sempre, emoji no máximo um e só quando faz sentido. Nunca empurra compra. O trabalho dele é te proteger, não vender.
@@ -33,9 +39,46 @@ Segurança com vantagem. Calma e confiante, nunca ansiosa. "Posso confiar e agir
 ## Identidade de público
 Nicho na identidade (tech/gamers que desconfiam de promoção falsa), universal no uso.
 
-## Identidade visual (direções)
-- Autêntico, nunca genérico. Nada de cara de template ou "AI slop"
-- Cada escolha de design (cor, fonte, forma) com regra e motivo
-- Money Flow como régua de qualidade, não modelo para copiar
+## Identidade visual
+
+### Direção
+Signage (editorial) + Onyx (disciplina brutalista). Preto e tipografia fazem o trabalho. Cor é conquistada, não decorativa.
+
+### Paleta
+| Token   | Hex       | Papel                                                    |
+|---------|-----------|----------------------------------------------------------|
+| Ink     | `#0A0A0A` | Texto, bordas, logo. Cor padrão de tudo                  |
+| Paper   | `#F5F5F0` | Superfícies, cards, fundo de componentes                 |
+| White   | `#FFFFFF` | Fundo da página e do board                               |
+| Forest  | `#1B6B3A` | Só desconto verificado como real. Conquistado, não decorativo |
+| Ochre   | `#7A5A10` | Só veredito "segura" (maquiado). Sem vermelho            |
+| Muted   | `#999999` | Labels, metadados, timestamps                            |
+
+Contrastes WCAG AA verificados: Forest 5.4:1, Ochre 5.2:1 (sobre Paper #F5F5F0).
+
+### Tipografia
+| Família          | Peso    | Papel                                  |
+|------------------|---------|----------------------------------------|
+| Archivo          | 900     | Display, títulos, manchetes. Sempre uppercase. Tracking -0.02em |
+| Libre Franklin   | 400/600 | Corpo, descrições, vereditos            |
+| IBM Plex Mono    | 500/700 | Dados, preços, labels. Uppercase + letter-spacing 0.06em para labels |
+
+### Regras de design
+- Radius 0 em tudo
+- Sem gradientes, glassmorphism, Inter
+- Borda lateral como indicador semântico (verde = real, ocre = maquiado)
+- Preços sempre em IBM Plex Mono, formato R$ 1.234,56
 - Mobile-first: o alerta chega no celular
-- Formato brasileiro: R$ 1.234,56
+- Sem amarelo (ML), laranja (Shopee/Amazon), roxo gradiente (IA genérica)
+- Money Flow como régua de qualidade, não modelo para copiar
+
+### Componentes-chave
+- Card de alerta real: borda esquerda verde, dados + veredito "Pode ir"
+- Card de alerta maquiado: borda esquerda ocre, dados + veredito "Segura"
+- Selos de veredito: PODE IR (verde), SEGURA (ocre), MONITORANDO (ink)
+- Mini gráfico de histórico de preço (sparkline)
+
+### Arquivos de design
+- Board completo: `memoria/design/brand-board.png`
+- Explorações: `memoria/design/exploracao-*.png`
+- Arquivo Paper: "Lowpoint — Branding"
