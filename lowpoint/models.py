@@ -60,6 +60,7 @@ class Watch(Base):
         Integer, ForeignKey("products.id"), nullable=False
     )
     target_price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    nickname: Mapped[str | None] = mapped_column(String, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow

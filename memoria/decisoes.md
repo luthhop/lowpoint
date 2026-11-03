@@ -35,3 +35,9 @@
 - API real: campo do item é "item_id" (não "id") e /products/{id}/items não retorna title/thumbnail. Título e imagem vêm de /products/{id} (campo "name" e "pictures")
 - Registro de produto: lowpoint/register.py (CLI sem bot). Aceita --url ou --catalog-id + --target
 - Coletor: lowpoint/collect.py. --once (ciclo único) ou --interval N (padrão 3600s). Um produto falhando não bloqueia os outros
+- Bot Telegram: alertas enviados pelo coletor (GitHub Actions, via API Telegram). Comandos via webhook numa função serverless Vercel (Python, plano Hobby)
+- Segurança webhook: secret_token validado no header X-Telegram-Bot-Api-Secret-Token + allowlist de chat_id (ALLOWED_CHAT_IDS). Estranhos recebem mensagem educada
+- Anti-spam de alertas: mesmo tipo de alerta reenviado só se preço cair abaixo do último alerta enviado para aquele watch
+- Ofertas suspeitas: sem alerta próprio, viram rodapé nos outros alertas. "Sem garantia" é aviso de destaque; "vendedor não-oficial" discreto
+- /remover e escolhas usam inline buttons (callback_query), sem estado de conversa no webhook
+- /adicionar aceita apelido opcional; sem apelido, usa título do produto

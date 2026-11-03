@@ -16,6 +16,7 @@ from lowpoint.db import SessionLocal
 from lowpoint.models import OfferSnapshot, PriceHistory, Product, Watch
 from lowpoint.sources.base import PriceSource
 from lowpoint.sources.ml_catalog import MLCatalogSource
+from lowpoint.telegram.notify import send_alerts_after_collect
 
 logging.basicConfig(
     level=logging.INFO,
@@ -103,7 +104,7 @@ def _collect_product(
             best.offer.price,
             best.offer.seller_id,
             best.offer.item_id,
-            " ⚠ " + ", ".join(best.warnings) if best.warnings else "",
+            " -> " + ", ".join(best.warnings) if best.warnings else "",
         )
     else:
         session.add(
@@ -124,6 +125,12 @@ def _collect_product(
         )
 
     session.commit()
+
+    if best:
+        try:
+            send_alerts_after_collect(best, product)
+        except Exception:
+            log.exception("Erro ao enviar alertas para %s", product.catalog_product_id)
 
 
 def main() -> None:

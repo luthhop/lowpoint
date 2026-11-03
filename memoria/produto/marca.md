@@ -18,13 +18,61 @@ O amigo desconfiado que confere tudo antes de você gastar. Fala direto, com nú
 ## Tom de voz
 Dados com atitude. Direto, com números, sem floreio.
 
-### Exemplos de mensagens
+### Exemplos de mensagens (Telegram)
 
-**Desconto real:**
-"PS5 bateu teu alvo: R$3.200. Menor preço dos últimos 90 dias. Esse é de verdade. Pode ir."
+**Alvo atingido (desconto real):**
+```
+✅ PODE IR · PS5 Digital · R$ 3.200,00
+
+Bateu teu alvo de R$ 3.500,00.
+Menor preço em 47 dias. Desconto real de 18% vs. mediana.
+
+Mediana 30d: R$ 3.890,00
+Menor anterior: R$ 3.280,00
+
+Loja oficial · Com garantia
+```
+
+**Desconto real (sem alvo atingido):**
+```
+✅ PODE IR · Monitor LG 27" · R$ 1.449,00
+
+Novo menor preço. Desconto real de 14% vs. mediana.
+
+Mediana 30d: R$ 1.680,00
+Menor anterior: R$ 1.520,00
+
+Loja oficial · Com garantia
+```
 
 **Desconto maquiado:**
-"PS5 com '40% OFF' por R$3.600. Calma: semana passada ele estava R$3.300. Subiram para baixar. Segura."
+```
+⚠ SEGURA · PS5 Digital · R$ 3.600,00
+
+O anúncio diz 40% OFF (de R$ 6.000,00).
+Mediana real dos últimos 30 dias: R$ 3.450,00.
+Preço subiu 12% nos 14d antes da "queda" (era R$ 3.300,00).
+
+Com garantia · Vendedor não-oficial
+```
+
+**Alvo atingido + maquiado:**
+```
+⚠ SEGURA · PS5 Digital · R$ 3.400,00
+
+Bateu teu alvo de R$ 3.500,00, mas o desconto é maquiado.
+O anúncio diz 39% OFF (de R$ 5.600,00).
+Mediana real dos últimos 30 dias: R$ 3.450,00.
+
+Com garantia · Vendedor não-oficial
+```
+
+**Rodapés (adicionados conforme contexto):**
+- `⚠ Sem garantia informada` — destaque, sempre que aplicável
+- `Vendedor não-oficial` — discreto, só como detalhe
+- `⚠ 2 ofertas suspeitas descartadas` — quando houver
+
+Todos os alertas incluem botão inline "Ver oferta" com link do anúncio exato.
 
 ### Regras de tom
 - Sempre com dados concretos (preço, percentual, período)

@@ -191,3 +191,39 @@ class TestCollectOnce:
             collect_once(mock_source)
 
         assert db_session.query(PriceHistory).count() == 2
+
+
+class TestAlertIsolation:
+    """send_alerts_after_collect failures must never crash the collector."""
+
+    def test_alert_exception_does_not_crash_collect(self, db_session, mock_source):
+        product = _seed_product_with_watch(db_session, "MLB_ALERT_FAIL")
+        mock_source.set_response("MLB_ALERT_FAIL", _make_snapshot("MLB_ALERT_FAIL"))
+
+        def _boom(*args, **kwargs):
+            raise ConnectionError("Telegram is down")
+
+        with (
+            patch("lowpoint.collect.SessionLocal", return_value=db_session),
+            patch("lowpoint.collect.send_alerts_after_collect", side_effect=_boom),
+        ):
+            from lowpoint.collect import collect_once
+            collect_once(mock_source)
+
+        assert db_session.query(PriceHistory).filter_by(product_id=product.id).count() == 1
+
+    def test_alert_skipped_when_no_token(self, db_session, mock_source, monkeypatch):
+        monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+        product = _seed_product_with_watch(db_session, "MLB_NO_TOKEN")
+        product_id = product.id
+        mock_source.set_response("MLB_NO_TOKEN", _make_snapshot("MLB_NO_TOKEN"))
+
+        with (
+            patch("lowpoint.collect.SessionLocal", return_value=db_session),
+            patch("lowpoint.telegram.notify._send_message") as mock_send,
+        ):
+            from lowpoint.collect import collect_once
+            collect_once(mock_source)
+
+        mock_send.assert_not_called()
+        assert db_session.query(PriceHistory).filter_by(product_id=product_id).count() == 1
