@@ -8,6 +8,10 @@ def fmt_brl(value: Decimal) -> str:
     return "R$ " + s.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def _dias(n: int) -> str:
+    return "1 dia" if n == 1 else f"{n} dias"
+
+
 def item_url(item_id: str) -> str:
     prefix = item_id[:3]
     number = item_id[3:]
@@ -97,7 +101,7 @@ def _format_target_hit_real(ctx: AlertContext) -> AlertMessage:
     if ctx.median_30d and ctx.median_30d > 0:
         discount = _pct(ctx.price, ctx.median_30d)
         lines.append(
-            f"Menor preço em {ctx.monitoring_days} dias. "
+            f"Menor preço em {_dias(ctx.monitoring_days)}. "
             f"Desconto real de {discount} vs. mediana."
         )
     lines.append("")

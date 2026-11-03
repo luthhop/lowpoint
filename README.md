@@ -4,7 +4,7 @@
 
 **Os outros te mostram a promoção. O Lowpoint te diz se ela é de verdade.**
 
-> Em construção — o núcleo já funciona. Veja o roadmap abaixo.
+> Bot Telegram funcionando. Veja o roadmap abaixo.
 
 ---
 
@@ -27,20 +27,25 @@ O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 
 ## O que já funciona
 
+- **Bot Telegram** com comandos `/adicionar`, `/lista`, `/remover`, `/apelido`
+- Alertas automáticos com veredito (real / maquiado) após cada coleta
+- Webhook serverless na Vercel para comandos do bot
 - Coletor de preços via API oficial do Mercado Livre (endpoint de catálogo)
 - Todas as ofertas de cada coleta armazenadas (offer_snapshots)
 - Melhor oferta com proteção anti-golpe (preço < 60% da mediana = suspeita)
 - Veredito: detecção de desconto real vs. maquiado
 - Menor preço; em empate, prefere oferta com garantia e depois loja oficial
 - Coleta automática a cada hora (GitHub Actions)
-- 53 testes
+- Anti-spam: alerta do mesmo tipo só se preço cair abaixo do último enviado
+- 120 testes
 
 ## Roadmap
 
 - [x] Modelo de dados + coletor + veredito
 - [x] Coleta automática a cada hora (GitHub Actions)
-- [ ] Bot Telegram (`/adicionar`, `/lista`, `/remover`, alerta de preço-alvo)
-- [ ] Veredito em tempo real nos alertas, bot rodando 24/7
+- [x] Bot Telegram (`/adicionar`, `/lista`, `/remover`, `/apelido`, alertas com veredito)
+- [x] Webhook serverless na Vercel
+- [ ] Veredito em tempo real nos alertas refinado, bot rodando 24/7
 - [ ] Landing page + dashboard (design no Paper)
 - [ ] Análise de dados: os descontos da Black Friday 2026 eram reais?
 
@@ -60,7 +65,8 @@ graph LR
 | Camada | Tecnologia |
 |---|---|
 | Linguagem | Python 3.14 |
-| Bot | python-telegram-bot |
+| Bot | Telegram Bot API (webhook) |
+| Webhook | Vercel (Python serverless) |
 | Banco | PostgreSQL (Neon cloud) |
 | ORM | SQLAlchemy 2 + Alembic |
 | Fonte de preços | API oficial do ML (catálogo) |

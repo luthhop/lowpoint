@@ -5,6 +5,7 @@ import pytest
 from lowpoint.telegram.formatter import (
     AlertContext,
     AlertMessage,
+    _dias,
     fmt_brl,
     format_alert,
     item_url,
@@ -249,3 +250,26 @@ class TestNoOriginalPrice:
         ))
         assert "OFF" not in msg.text
         assert "R$ 3.450,00" in msg.text
+
+
+class TestDias:
+    def test_singular(self):
+        assert _dias(1) == "1 dia"
+
+    def test_plural(self):
+        assert _dias(2) == "2 dias"
+        assert _dias(30) == "30 dias"
+
+    def test_zero(self):
+        assert _dias(0) == "0 dias"
+
+
+class TestPluralInAlerts:
+    def test_1_dia_no_dias(self):
+        msg = format_alert(_ctx(monitoring_days=1))
+        assert "1 dia" in msg.text
+        assert "1 dias" not in msg.text
+
+    def test_many_dias(self):
+        msg = format_alert(_ctx(monitoring_days=47))
+        assert "47 dias" in msg.text

@@ -48,7 +48,7 @@ class TestVerdictNeutroHistoricoInsuficiente:
             min_monitoring_days=7,
         )
         assert result.verdict == "neutro"
-        assert "3 dia(s) de monitoramento" in result.reason
+        assert "3 dias de monitoramento" in result.reason
         assert result.monitoring_days == 3
 
 

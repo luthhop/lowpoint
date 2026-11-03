@@ -70,7 +70,7 @@ def compute_verdict(
             lowest_price=lowest,
             median_30d=None,
             monitoring_days=monitoring_days,
-            reason=f"menor preço em {monitoring_days} dia(s) de monitoramento",
+            reason=f"menor preço em {'1 dia' if monitoring_days == 1 else f'{monitoring_days} dias'} de monitoramento",
         )
 
     lowest_price = min(p.price for p in available)
@@ -80,7 +80,9 @@ def compute_verdict(
     median_30d = median(prices_30d) if prices_30d else median([p.price for p in available])
 
     period_label = (
-        f"{monitoring_days} dias" if monitoring_days < 90 else "90 dias"
+        ("1 dia" if monitoring_days == 1 else f"{monitoring_days} dias")
+        if monitoring_days < 90
+        else "90 dias"
     )
 
     hike_result = _detect_hike(

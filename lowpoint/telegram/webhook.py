@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from lowpoint.db import SessionLocal
 from lowpoint.models import PriceHistory, Product, Watch
 from lowpoint.register import extract_catalog_id, register_product
-from lowpoint.telegram.formatter import fmt_brl
+from lowpoint.telegram.formatter import _dias, fmt_brl
 from lowpoint.telegram.security import (
     UNAUTHORIZED_MESSAGE,
     is_chat_allowed,
@@ -45,6 +45,8 @@ def handle_update(update: dict, secret_header: str | None) -> dict:
         return _cmd_lista(chat_id)
     if text.startswith("/remover"):
         return _cmd_remover(chat_id)
+    if text.startswith("/apelido"):
+        return _cmd_apelido(chat_id, text)
     if text.startswith("/start"):
         return _reply(chat_id, "Lowpoint. Manda /lista pra ver teus produtos.")
 
@@ -167,7 +169,7 @@ def _cmd_lista(chat_id: int) -> dict:
             lines.append(
                 f"{i}. <b>{name}</b>\n"
                 f"   Agora: {price_str} · Alvo: {target}\n"
-                f"   Monitorando há {days} dias"
+                f"   Monitorando há {_dias(days)}"
             )
 
         return _reply(chat_id, "\n".join(lines))
@@ -204,6 +206,72 @@ def _cmd_remover(chat_id: int) -> dict:
         session.close()
 
 
+def _cmd_apelido(chat_id: int, text: str) -> dict:
+    parts = text.split(maxsplit=2)
+
+    if len(parts) >= 3:
+        try:
+            watch_id = int(parts[1])
+        except ValueError:
+            return _reply(chat_id, "ID inválido. Usa /apelido pra ver as opções.")
+        nickname = parts[2].strip()
+        if not nickname:
+            return _reply(chat_id, "Manda o apelido depois do ID.")
+        return _do_rename(chat_id, watch_id, nickname)
+
+    session = SessionLocal()
+    try:
+        watches = (
+            session.query(Watch)
+            .join(Product)
+            .filter(Watch.chat_id == chat_id, Watch.active.is_(True))
+            .order_by(Watch.created_at)
+            .all()
+        )
+        if not watches:
+            return _reply(chat_id, "Nenhum produto pra renomear.")
+
+        buttons = []
+        for i, w in enumerate(watches, 1):
+            name = w.nickname or w.product.title
+            buttons.append(
+                [{"text": f"{i}. {name}", "callback_data": f"nick:{w.id}"}]
+            )
+
+        return _reply(
+            chat_id,
+            "Qual produto quer renomear?",
+            reply_markup={"inline_keyboard": buttons},
+        )
+    finally:
+        session.close()
+
+
+def _do_rename(chat_id: int, watch_id: int, nickname: str) -> dict:
+    session = SessionLocal()
+    try:
+        watch = (
+            session.query(Watch)
+            .filter(
+                Watch.id == watch_id,
+                Watch.chat_id == chat_id,
+                Watch.active.is_(True),
+            )
+            .first()
+        )
+        if not watch:
+            return _reply(chat_id, "Produto não encontrado.")
+
+        watch.nickname = nickname
+        session.commit()
+        return _reply(chat_id, f"Renomeado: <b>{nickname}</b>")
+    except Exception:
+        session.rollback()
+        return _reply(chat_id, "Erro ao renomear. Tenta de novo.")
+    finally:
+        session.close()
+
+
 def _handle_callback(callback: dict) -> dict:
     data = callback.get("data", "")
     chat_id = callback.get("message", {}).get("chat", {}).get("id")
@@ -214,8 +282,41 @@ def _handle_callback(callback: dict) -> dict:
 
     if data.startswith("rm:"):
         return _do_remove(chat_id, callback_id, data)
+    if data.startswith("nick:"):
+        return _handle_nick_callback(chat_id, callback_id, data)
 
     return {"method": "answerCallbackQuery", "callback_query_id": callback_id}
+
+
+def _handle_nick_callback(chat_id: int, callback_id: str, data: str) -> dict:
+    try:
+        watch_id = int(data.split(":")[1])
+    except (IndexError, ValueError):
+        return {"method": "answerCallbackQuery", "callback_query_id": callback_id}
+
+    session = SessionLocal()
+    try:
+        watch = (
+            session.query(Watch)
+            .join(Product)
+            .filter(
+                Watch.id == watch_id,
+                Watch.chat_id == chat_id,
+                Watch.active.is_(True),
+            )
+            .first()
+        )
+        if not watch:
+            return _reply(chat_id, "Produto não encontrado.")
+
+        name = watch.nickname or watch.product.title
+        return _reply(
+            chat_id,
+            f"Manda o novo apelido:\n\n"
+            f"<code>/apelido {watch_id} Novo Nome</code>",
+        )
+    finally:
+        session.close()
 
 
 def _do_remove(chat_id: int, callback_id: str, data: str) -> dict:
