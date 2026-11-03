@@ -2,7 +2,7 @@
 
 **Os outros te mostram a promoção. O Lowpoint te diz se ela é de verdade.**
 
-> Em construção — o núcleo já funciona, o bot Telegram vem na próxima semana.
+> Em construção — o núcleo já funciona. Veja o roadmap abaixo.
 
 ---
 
@@ -19,25 +19,27 @@ Bot pessoal no Telegram que monitora produtos específicos no Mercado Livre. Ale
 | **Pode ir** | Desconto real — preço abaixo do mínimo histórico |
 | **Segura** | Desconto maquiado — preço foi inflado antes de "cair" |
 | **Suspeito** | Oferta com preço muito abaixo da mediana (possível golpe) |
+| **Monitorando** | Histórico insuficiente ou preço dentro do normal |
 
 O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 
 ## O que já funciona
 
 - Coletor de preços via API oficial do Mercado Livre (endpoint de catálogo)
-- Coleta automática a cada hora (GitHub Actions)
 - Todas as ofertas de cada coleta armazenadas (offer_snapshots)
 - Melhor oferta com proteção anti-golpe (preço < 60% da mediana = suspeita)
 - Veredito: detecção de desconto real vs. maquiado
-- Desempate inteligente: garantia > loja oficial > preço
+- Menor preço; em empate, prefere oferta com garantia e depois loja oficial
 - 53 testes
 
 ## Roadmap
 
 - [x] Modelo de dados + coletor + veredito
+- [ ] Coleta automática a cada hora (GitHub Actions)
 - [ ] Bot Telegram (`/adicionar`, `/lista`, `/remover`, alerta de preço-alvo)
 - [ ] Veredito em tempo real nos alertas, bot rodando 24/7
 - [ ] Landing page + dashboard (design no Paper)
+- [ ] Análise de dados: os descontos da Black Friday 2026 eram reais?
 
 ## Arquitetura
 
@@ -139,10 +141,10 @@ O registro completo está em [`memoria/decisoes.md`](memoria/decisoes.md). Desta
 
 ## Como foi construído
 
-Projeto inteiro construído com IA como copiloto:
+Eu defini produto, público-alvo, marca e posicionamento, e tomei as decisões técnicas e éticas — como descartar scraping (viola os termos do ML e o projeto é público), guardar todas as ofertas para poder recalcular o histórico, e proteger contra golpe além de desconto maquiado.
 
-- **[Claude Code](https://claude.com/claude-code)** — arquitetura, código, testes, decisões técnicas
-- **[Obsidian](https://obsidian.md/)** como memória persistente — o vault em [`memoria/`](memoria/) documenta cada decisão e o estado do projeto entre sessões
+- **[Claude Code](https://claude.com/claude-code)** implementou o código sob minha revisão, com testes obrigatórios desde o primeiro commit
+- **[Obsidian](https://obsidian.md/)** como memória persistente do projeto — o vault em [`memoria/`](memoria/) documenta cada decisão e o estado entre sessões
 - **[Paper](https://paper.design/)** para todo o design — branding board, exploração visual, componentes
 
 O processo também é o produto: o vault de memória fica no repositório, mostrando como o Lowpoint foi construído.
