@@ -1,5 +1,7 @@
 # LOWPOINT.
 
+[![Coleta de preços](https://github.com/luthhop/lowpoint/actions/workflows/collect.yml/badge.svg)](https://github.com/luthhop/lowpoint/actions/workflows/collect.yml)
+
 **Os outros te mostram a promoção. O Lowpoint te diz se ela é de verdade.**
 
 > Em construção — o núcleo já funciona. Veja o roadmap abaixo.
@@ -30,12 +32,13 @@ O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 - Melhor oferta com proteção anti-golpe (preço < 60% da mediana = suspeita)
 - Veredito: detecção de desconto real vs. maquiado
 - Menor preço; em empate, prefere oferta com garantia e depois loja oficial
+- Coleta automática a cada hora (GitHub Actions)
 - 53 testes
 
 ## Roadmap
 
 - [x] Modelo de dados + coletor + veredito
-- [ ] Coleta automática a cada hora (GitHub Actions)
+- [x] Coleta automática a cada hora (GitHub Actions)
 - [ ] Bot Telegram (`/adicionar`, `/lista`, `/remover`, alerta de preço-alvo)
 - [ ] Veredito em tempo real nos alertas, bot rodando 24/7
 - [ ] Landing page + dashboard (design no Paper)
@@ -78,7 +81,7 @@ graph LR
 
 ```bash
 # Clonar
-git clone https://github.com/lucaslimadossantos1206/lowpoint.git
+git clone https://github.com/luthhop/lowpoint.git
 cd lowpoint
 
 # Dependências
