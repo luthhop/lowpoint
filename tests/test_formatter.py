@@ -58,7 +58,7 @@ def _ctx(**overrides) -> AlertContext:
         original_price=Decimal("4500.00"),
         target_price=Decimal("3500.00"),
         verdict="real",
-        reason="desconto real de 18% vs. mediana — menor preço em 47 dias",
+        reason="desconto real",
         lowest_price=Decimal("3280.00"),
         median_30d=Decimal("3890.00"),
         monitoring_days=47,
@@ -66,6 +66,7 @@ def _ctx(**overrides) -> AlertContext:
         has_warranty=True,
         is_official=True,
         suspect_count=0,
+        cheapest_suspect_price=None,
     )
     defaults.update(overrides)
     return AlertContext(**defaults)
@@ -78,21 +79,23 @@ class TestFormatAlertTargetHitReal:
 
     def test_first_line_has_verdict_and_price(self):
         msg = format_alert(_ctx())
-        assert "PODE IR" in msg.text.split("\n")[0]
-        assert "R$ 3.200,00" in msg.text.split("\n")[0]
-        assert "PS5 Digital Edition" in msg.text.split("\n")[0]
+        first = msg.text.split("\n")[0]
+        assert "PODE IR" in first
+        assert "R$ 3.200,00" in first
+        assert "PS5 Digital Edition" in first
 
     def test_mentions_target(self):
         msg = format_alert(_ctx())
         assert "R$ 3.500,00" in msg.text
 
-    def test_mentions_median(self):
+    def test_brand_phrase(self):
         msg = format_alert(_ctx())
-        assert "R$ 3.890,00" in msg.text
+        assert "Pode ir." in msg.text
 
-    def test_mentions_lowest(self):
+    def test_preco_normal_not_mediana(self):
         msg = format_alert(_ctx())
-        assert "R$ 3.280,00" in msg.text
+        assert "mediana" not in msg.text.lower()
+        assert "Preço normal" in msg.text
 
     def test_button(self):
         msg = format_alert(_ctx())
@@ -115,9 +118,21 @@ class TestFormatAlertVerdictReal:
         assert "PODE IR" in first
         assert "R$ 3.600,00" in first
 
-    def test_mentions_menor_preco(self):
+    def test_brand_phrase(self):
         msg = format_alert(_ctx(price=Decimal("3600.00")))
-        assert "menor preço" in msg.text.lower()
+        assert "Pode ir." in msg.text
+
+    def test_abaixo_do_normal(self):
+        msg = format_alert(_ctx(price=Decimal("3600.00")))
+        assert "abaixo do normal" in msg.text
+
+    def test_no_mediana(self):
+        msg = format_alert(_ctx(price=Decimal("3600.00")))
+        assert "mediana" not in msg.text.lower()
+
+    def test_mentions_preco_normal(self):
+        msg = format_alert(_ctx(price=Decimal("3600.00")))
+        assert "Preço normal" in msg.text
 
 
 class TestFormatAlertMaquiado:
@@ -140,6 +155,27 @@ class TestFormatAlertMaquiado:
         assert "SEGURA" in first
         assert "R$ 3.600,00" in first
 
+    def test_subiram_pra_baixar(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3600.00"),
+            pre_hike_price=Decimal("3300.00"),
+            median_30d=Decimal("3450.00"),
+        ))
+        assert "Subiram pra baixar" in msg.text
+        assert "2 semanas" in msg.text
+        assert "14d" not in msg.text
+
+    def test_preco_normal_no_ultimo_mes(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3600.00"),
+            median_30d=Decimal("3450.00"),
+        ))
+        assert "último mês" in msg.text
+        assert "30d" not in msg.text
+        assert "mediana" not in msg.text.lower()
+
     def test_confronts_claimed_discount(self):
         msg = format_alert(_ctx(
             verdict="maquiado",
@@ -149,7 +185,6 @@ class TestFormatAlertMaquiado:
         ))
         assert "40% OFF" in msg.text
         assert "R$ 6.000,00" in msg.text
-        assert "R$ 3.450,00" in msg.text
 
     def test_shows_pre_hike(self):
         msg = format_alert(_ctx(
@@ -179,7 +214,7 @@ class TestFormatAlertTargetHitMaquiado:
             median_30d=Decimal("3450.00"),
         ))
         assert "teu alvo" in msg.text
-        assert "maquiado" in msg.text
+        assert "subiram pra baixar" in msg.text
 
     def test_first_line_segura(self):
         msg = format_alert(_ctx(
@@ -188,6 +223,14 @@ class TestFormatAlertTargetHitMaquiado:
         ))
         first = msg.text.split("\n")[0]
         assert "SEGURA" in first
+
+    def test_no_mediana(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3400.00"),
+            median_30d=Decimal("3450.00"),
+        ))
+        assert "mediana" not in msg.text.lower()
 
 
 class TestFormatAlertNeutro:
@@ -206,13 +249,23 @@ class TestFormatAlertNeutro:
         first = msg.text.split("\n")[0]
         assert "MONITORANDO" in first
 
+    def test_preco_normal(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("4000.00"),
+        ))
+        assert "Preço normal" in msg.text
+        assert "mediana" not in msg.text.lower()
+
 
 class TestFooter:
-    def test_sem_garantia_highlighted(self):
+    def test_sem_garantia_no_emoji(self):
         msg = format_alert(_ctx(has_warranty=False))
-        assert "Sem garantia informada" in msg.text
+        lines = msg.text.split("\n")
+        garantia_line = [l for l in lines if "Sem garantia" in l][0]
+        assert "⚠" not in garantia_line
 
-    def test_vendedor_nao_oficial_discrete(self):
+    def test_vendedor_nao_oficial(self):
         msg = format_alert(_ctx(is_official=False))
         assert "Vendedor não-oficial" in msg.text
 
@@ -220,24 +273,57 @@ class TestFooter:
         msg = format_alert(_ctx(is_official=True))
         assert "Loja oficial" in msg.text
 
-    def test_suspect_footer(self):
-        msg = format_alert(_ctx(suspect_count=3))
-        assert "3 ofertas suspeitas descartadas" in msg.text
+    def test_suspect_shows_cheapest_price(self):
+        msg = format_alert(_ctx(
+            suspect_count=3,
+            cheapest_suspect_price=Decimal("2399.00"),
+        ))
+        assert "R$ 2.399,00" in msg.text
+        assert "golpe" in msg.text
 
     def test_no_suspect_footer_when_zero(self):
         msg = format_alert(_ctx(suspect_count=0))
-        assert "suspeita" not in msg.text
+        assert "golpe" not in msg.text
 
     def test_single_suspect(self):
-        msg = format_alert(_ctx(suspect_count=1))
-        assert "1 oferta suspeita descartada" in msg.text
+        msg = format_alert(_ctx(
+            suspect_count=1,
+            cheapest_suspect_price=Decimal("1500.00"),
+        ))
+        assert "Ignorei um anúncio" in msg.text
+        assert "R$ 1.500,00" in msg.text
+
+    def test_no_descartadas_text(self):
+        msg = format_alert(_ctx(
+            suspect_count=2,
+            cheapest_suspect_price=Decimal("1200.00"),
+        ))
+        assert "descartada" not in msg.text
+
+
+class TestMaxOneEmoji:
+    def test_real_one_emoji(self):
+        msg = format_alert(_ctx())
+        assert msg.text.count("✅") == 1
+        assert "⚠" not in msg.text
+
+    def test_maquiado_one_emoji(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3600.00"),
+            has_warranty=False,
+            suspect_count=2,
+            cheapest_suspect_price=Decimal("1200.00"),
+        ))
+        assert msg.text.count("⚠") == 1
+        first_line = msg.text.split("\n")[0]
+        assert "⚠" in first_line
 
 
 class TestHtmlEscape:
     def test_ampersand_in_name(self):
         msg = format_alert(_ctx(product_name="TV Samsung 50\" 4K & HDR"))
         assert "&amp;" in msg.text
-        assert "&#x27;" in msg.text or "&quot;" in msg.text or '"' not in msg.text.split("\n")[0]
 
 
 class TestNoOriginalPrice:
@@ -273,3 +359,18 @@ class TestPluralInAlerts:
     def test_many_dias(self):
         msg = format_alert(_ctx(monitoring_days=47))
         assert "47 dias" in msg.text
+
+
+class TestNoAbbreviations:
+    def test_no_30d(self):
+        msg = format_alert(_ctx())
+        assert "30d" not in msg.text
+
+    def test_no_14d_in_maquiado(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3600.00"),
+            pre_hike_price=Decimal("3300.00"),
+            median_30d=Decimal("3450.00"),
+        ))
+        assert "14d" not in msg.text

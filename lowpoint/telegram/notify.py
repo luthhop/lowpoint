@@ -129,6 +129,11 @@ def _process_watch(
     name = watch.nickname or product.title
     target = Decimal(str(watch.target_price))
 
+    suspects = best.suspect_offers
+    cheapest_suspect = (
+        min(s.price for s in suspects) if suspects else None
+    )
+
     ctx = AlertContext(
         product_name=name,
         item_id=best.offer.item_id,
@@ -143,7 +148,8 @@ def _process_watch(
         pre_hike_price=verdict.pre_hike_price,
         has_warranty=_has_warranty(best.offer.warranty),
         is_official=best.offer.official_store_id is not None,
-        suspect_count=len(best.suspect_offers),
+        suspect_count=len(suspects),
+        cheapest_suspect_price=cheapest_suspect,
     )
 
     msg = format_alert(ctx)

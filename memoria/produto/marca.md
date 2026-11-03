@@ -24,10 +24,10 @@ Dados com atitude. Direto, com números, sem floreio.
 ```
 ✅ PODE IR · PS5 Digital · R$ 3.200,00
 
-Bateu teu alvo de R$ 3.500,00.
-Menor preço em 47 dias. Desconto real de 18% vs. mediana.
+Bateu teu alvo de R$ 3.500,00. Esse é de verdade. Pode ir.
+Menor preço em 47 dias, 18% abaixo do normal.
 
-Mediana 30d: R$ 3.890,00
+Preço normal: R$ 3.890,00
 Menor anterior: R$ 3.280,00
 
 Loja oficial · Com garantia
@@ -37,9 +37,9 @@ Loja oficial · Com garantia
 ```
 ✅ PODE IR · Monitor LG 27" · R$ 1.449,00
 
-Novo menor preço. Desconto real de 14% vs. mediana.
+Novo menor preço, 14% abaixo do normal. Esse é de verdade. Pode ir.
 
-Mediana 30d: R$ 1.680,00
+Preço normal: R$ 1.680,00
 Menor anterior: R$ 1.520,00
 
 Loja oficial · Com garantia
@@ -50,8 +50,8 @@ Loja oficial · Com garantia
 ⚠ SEGURA · PS5 Digital · R$ 3.600,00
 
 O anúncio diz 40% OFF (de R$ 6.000,00).
-Mediana real dos últimos 30 dias: R$ 3.450,00.
-Preço subiu 12% nos 14d antes da "queda" (era R$ 3.300,00).
+Preço normal no último mês: R$ 3.450,00.
+Subiram pra baixar. Preço subiu 9% nas 2 semanas antes da "queda" (era R$ 3.300,00).
 
 Com garantia · Vendedor não-oficial
 ```
@@ -60,17 +60,17 @@ Com garantia · Vendedor não-oficial
 ```
 ⚠ SEGURA · PS5 Digital · R$ 3.400,00
 
-Bateu teu alvo de R$ 3.500,00, mas o desconto é maquiado.
+Bateu teu alvo de R$ 3.500,00, mas subiram pra baixar.
 O anúncio diz 39% OFF (de R$ 5.600,00).
-Mediana real dos últimos 30 dias: R$ 3.450,00.
+Preço normal no último mês: R$ 3.450,00.
 
 Com garantia · Vendedor não-oficial
 ```
 
 **Rodapés (adicionados conforme contexto):**
-- `⚠ Sem garantia informada` — destaque, sempre que aplicável
+- `Sem garantia informada` — destaque (sem emoji), sempre que aplicável
 - `Vendedor não-oficial` — discreto, só como detalhe
-- `⚠ 2 ofertas suspeitas descartadas` — quando houver
+- `Ignorei um anúncio de R$ 2.399,00, bem abaixo do normal: costuma ser golpe.` — quando houver suspeita
 
 Todos os alertas incluem botão inline "Ver oferta" com link do anúncio exato.
 

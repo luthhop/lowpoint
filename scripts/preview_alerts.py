@@ -44,19 +44,20 @@ def _send(token: str, chat_id: int, msg: AlertMessage) -> None:
 
 _SCENARIOS: list[tuple[str, dict]] = [
     (
-        "Desconto real (PODE IR)",
+        "Desconto real sem alvo (PODE IR)",
         dict(
             verdict="real",
-            price=Decimal("3190.00"),
+            price=Decimal("3690.00"),
             original_price=Decimal("4499.00"),
             target_price=Decimal("3500.00"),
-            lowest_price=Decimal("3280.00"),
+            lowest_price=Decimal("3780.00"),
             median_30d=Decimal("3890.00"),
             monitoring_days=47,
             pre_hike_price=None,
             has_warranty=True,
             is_official=True,
             suspect_count=0,
+            cheapest_suspect_price=None,
         ),
     ),
     (
@@ -73,6 +74,7 @@ _SCENARIOS: list[tuple[str, dict]] = [
             has_warranty=True,
             is_official=True,
             suspect_count=0,
+            cheapest_suspect_price=None,
         ),
     ),
     (
@@ -89,6 +91,7 @@ _SCENARIOS: list[tuple[str, dict]] = [
             has_warranty=True,
             is_official=False,
             suspect_count=0,
+            cheapest_suspect_price=None,
         ),
     ),
     (
@@ -105,6 +108,7 @@ _SCENARIOS: list[tuple[str, dict]] = [
             has_warranty=False,
             is_official=True,
             suspect_count=2,
+            cheapest_suspect_price=Decimal("1899.00"),
         ),
     ),
     (
@@ -121,6 +125,7 @@ _SCENARIOS: list[tuple[str, dict]] = [
             has_warranty=False,
             is_official=False,
             suspect_count=3,
+            cheapest_suspect_price=Decimal("2399.00"),
         ),
     ),
 ]
