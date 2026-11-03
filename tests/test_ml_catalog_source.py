@@ -70,14 +70,24 @@ class TestMLCatalogSourceParsing:
         fixture_data = json.loads(
             (FIXTURES / "ml_catalog_response.json").read_text(encoding="utf-8")
         )
+        product_info = {
+            "name": "Monitor Gamer LG UltraGear 32GN600 32\" VA QHD 165Hz",
+            "pictures": [{"url": "https://http2.mlstatic.com/D_NQ_NP_example.jpg"}],
+        }
 
         source = MLCatalogSource.__new__(MLCatalogSource)
 
-        with patch.object(source, "_get", return_value=fixture_data):
+        def mock_get(url):
+            if "/items" in url:
+                return fixture_data
+            return product_info
+
+        with patch.object(source, "_get", side_effect=mock_get):
             result = source.fetch_catalog("MLB24061510")
 
         assert result.catalog_product_id == "MLB24061510"
         assert result.title == "Monitor Gamer LG UltraGear 32GN600 32\" VA QHD 165Hz"
+        assert result.image_url == "https://http2.mlstatic.com/D_NQ_NP_example.jpg"
         assert len(result.offers) == 3
 
         best_new = [o for o in result.offers if o.condition == "new"]
@@ -102,9 +112,15 @@ class TestMLCatalogSourceParsing:
 
     def test_empty_results(self):
         source = MLCatalogSource.__new__(MLCatalogSource)
+        product_info = {"name": "", "pictures": []}
         empty = {"paging": {"total": 0, "offset": 0, "limit": 50}, "results": []}
 
-        with patch.object(source, "_get", return_value=empty):
+        def mock_get(url):
+            if "/items" in url:
+                return empty
+            return product_info
+
+        with patch.object(source, "_get", side_effect=mock_get):
             result = source.fetch_catalog("MLB99999999")
 
         assert result.offers == []

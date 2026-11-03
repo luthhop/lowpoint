@@ -1,7 +1,8 @@
 # Decisões
 - Stack de IA: só Claude Code + Paper + Obsidian (sem Codex)
 - MVP: bot Telegram pessoal, só Mercado Livre. Comandos /adicionar /lista /remover, alerta de preço-alvo, histórico de preços
-- Stack MVP: Python + python-telegram-bot + PostgreSQL 16 (Docker) + SQLAlchemy 2 + Alembic
+- Stack MVP: Python + python-telegram-bot + PostgreSQL (Neon cloud) + SQLAlchemy 2 + Alembic
+- Banco: Neon (cloud) para produção e coleta contínua. Docker Compose mantido como opção para dev local. DATABASE_URL no .env com SSL obrigatório
 - Tipos monetários: NUMERIC(12,2) no banco, Decimal no Python. Nunca float
 - Datas: TIMESTAMPTZ no banco, exibição America/Sao_Paulo
 - Prazo: núcleo funcionando antes da Black Friday (2026-11-27), monitorar 2 produtos reais
@@ -13,7 +14,9 @@
 - Fonte de preço MVP: /products/{id}/items (endpoint de catálogo). Só links de catálogo (/p/MLB...) aceitos. Links de anúncio avulso: bot avisa que precisa ser link de catálogo
 - Interface PriceSource aprovada: ABC desacoplando fonte de preço do resto do sistema. MLCatalogSource para MVP, Amazon Creators API para Fase 2
 - Tabela offer_snapshots: todas as ofertas de cada coleta. price_history guarda a melhor oferta (derivada)
-- Melhor oferta: menor preço entre condition=new. Filtros configuráveis: exigir garantia, preferir loja oficial. Alerta avisa se sem garantia
+- Melhor oferta: menor preço entre ofertas new não-suspeitas. Loja oficial é desempate (mesmo preço), não filtro. Avisos: vendedor não-oficial, sem garantia, ofertas suspeitas
+- Proteção contra golpe: ofertas com preço < 60% da mediana da coleta são suspeitas e excluídas da melhor oferta (threshold configurável). Lowpoint protege contra golpe, não só contra desconto maquiado
+- "Sem garantia" (string da API ML) tratado como ausência de garantia para fins de aviso e require_warranty
 - Disponibilidade: produto disponível = existe pelo menos 1 oferta válida na coleta
 - Veredito: função pura em módulo próprio. Limites configuráveis (5%, 10%, 7d, 14d). Todo alerta carrega veredito
 - Maquiado: original_price > mediana_30d * 1.10 OU preço subiu >10% nos 14d antes da queda
@@ -29,3 +32,6 @@
 - Logo: wordmark "LOWPOINT." (Archivo Black 900 + ponto Forest). Duplo sentido: ponto = point + ponto final
 - Avatar Telegram: monograma "L." branco sobre círculo Ink, ponto Forest
 - Elemento secundário: ponto Forest isolado em círculo Ink — usar em favicon, loading, hero SVG
+- API real: campo do item é "item_id" (não "id") e /products/{id}/items não retorna title/thumbnail. Título e imagem vêm de /products/{id} (campo "name" e "pictures")
+- Registro de produto: lowpoint/register.py (CLI sem bot). Aceita --url ou --catalog-id + --target
+- Coletor: lowpoint/collect.py. --once (ciclo único) ou --interval N (padrão 3600s). Um produto falhando não bloqueia os outros

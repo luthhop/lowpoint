@@ -1,8 +1,6 @@
-import json
 import os
 from datetime import datetime, timezone
 from decimal import Decimal
-from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -11,67 +9,97 @@ from lowpoint.sources.base import CatalogSnapshot, OfferData, PriceSource
 
 load_dotenv()
 
-_TOKENS_PATH = Path(__file__).resolve().parent.parent.parent / "ml_tokens.json"
 _API_BASE = "https://api.mercadolibre.com"
 
 
 class MLCatalogSource(PriceSource):
-    def __init__(self, tokens_path: Path | None = None):
-        self._tokens_path = tokens_path or _TOKENS_PATH
+    def __init__(self, session_factory=None):
+        if session_factory is None:
+            from lowpoint.db import SessionLocal
+            session_factory = SessionLocal
+        self._session_factory = session_factory
         self._access_token: str | None = None
 
     def _load_token(self) -> str:
         if self._access_token:
             return self._access_token
-        data = json.loads(self._tokens_path.read_text(encoding="utf-8"))
-        self._access_token = data["access_token"]
-        return self._access_token
+        from lowpoint.models import MLToken
+
+        session = self._session_factory()
+        try:
+            row = session.query(MLToken).first()
+            if not row:
+                raise RuntimeError(
+                    "Token ML não encontrado no banco. "
+                    "Rode: python scripts/migrate_ml_tokens.py"
+                )
+            self._access_token = row.access_token
+            return self._access_token
+        finally:
+            session.close()
 
     def _refresh_token(self) -> str:
-        data = json.loads(self._tokens_path.read_text(encoding="utf-8"))
-        resp = requests.post(
-            f"{_API_BASE}/oauth/token",
-            json={
-                "grant_type": "refresh_token",
-                "client_id": os.environ.get("ML_CLIENT_ID"),
-                "client_secret": os.environ.get("ML_CLIENT_SECRET"),
-                "refresh_token": data.get("refresh_token"),
-            },
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
-        )
-        resp.raise_for_status()
-        new_data = resp.json()
-        tokens = {
-            "access_token": new_data["access_token"],
-            "refresh_token": new_data.get("refresh_token"),
-            "expires_in": new_data.get("expires_in"),
-            "user_id": new_data.get("user_id"),
-        }
-        self._tokens_path.write_text(
-            json.dumps(tokens, indent=2), encoding="utf-8"
-        )
-        self._access_token = tokens["access_token"]
-        return self._access_token
+        from lowpoint.models import MLToken
+
+        session = self._session_factory()
+        try:
+            row = session.query(MLToken).with_for_update().first()
+            if not row:
+                raise RuntimeError("Token ML não encontrado no banco.")
+
+            resp = requests.post(
+                f"{_API_BASE}/oauth/token",
+                json={
+                    "grant_type": "refresh_token",
+                    "client_id": os.environ.get("ML_CLIENT_ID"),
+                    "client_secret": os.environ.get("ML_CLIENT_SECRET"),
+                    "refresh_token": row.refresh_token,
+                },
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+            )
+            resp.raise_for_status()
+            new_data = resp.json()
+
+            row.access_token = new_data["access_token"]
+            row.refresh_token = new_data.get("refresh_token")
+            row.expires_in = new_data.get("expires_in")
+            row.user_id = new_data.get("user_id")
+            session.commit()
+
+            self._access_token = row.access_token
+            return self._access_token
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def _get(self, url: str) -> dict:
         token = self._load_token()
         resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
         if resp.status_code == 401:
+            self._access_token = None
             token = self._refresh_token()
             resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
         resp.raise_for_status()
         return resp.json()
+
+    def _fetch_product_info(self, catalog_product_id: str) -> tuple[str, str | None]:
+        data = self._get(f"{_API_BASE}/products/{catalog_product_id}")
+        title = data.get("name", "")
+        pictures = data.get("pictures", [])
+        image_url = pictures[0]["url"] if pictures else None
+        return title, image_url
 
     def fetch_catalog(self, catalog_product_id: str) -> CatalogSnapshot:
         now = datetime.now(timezone.utc)
         offers: list[OfferData] = []
         offset = 0
         limit = 50
-        title = ""
-        image_url = None
+        title, image_url = self._fetch_product_info(catalog_product_id)
 
         while True:
             url = (
@@ -89,11 +117,6 @@ class MLCatalogSource(PriceSource):
                 paging = {}
 
             for item in results:
-                if not title and item.get("title"):
-                    title = item["title"]
-                if not image_url and item.get("thumbnail"):
-                    image_url = item["thumbnail"]
-
                 shipping = item.get("shipping", {})
                 sale_price = item.get("sale_price", {})
                 price_raw = sale_price.get("amount") if sale_price else item.get("price")
@@ -108,7 +131,7 @@ class MLCatalogSource(PriceSource):
 
                 offers.append(
                     OfferData(
-                        item_id=item.get("id", ""),
+                        item_id=item.get("item_id") or item.get("id", ""),
                         seller_id=item.get("seller_id", item.get("seller", {}).get("id", 0)),
                         price=Decimal(str(price_raw)),
                         original_price=(

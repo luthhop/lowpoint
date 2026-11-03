@@ -50,7 +50,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("target_price", sa.Numeric(12, 2), nullable=False),
-        sa.Column("active", sa.Boolean, server_default=sa.text("true")),
+        sa.Column("active", sa.Boolean, nullable=False, server_default=sa.text("true")),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

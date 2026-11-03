@@ -2,18 +2,31 @@ import os
 from logging.config import fileConfig
 
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
 
 from alembic import context
 from lowpoint.models import Base
 
 load_dotenv()
 
+
+def _normalize_url(url: str) -> str:
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    return url
+
+
+def _ssl_args(url: str) -> dict:
+    if "localhost" not in url and "127.0.0.1" not in url:
+        return {"sslmode": "require"}
+    return {}
+
+
 config = context.config
 
 database_url = os.environ.get("DATABASE_URL")
 if database_url:
-    config.set_main_option("sqlalchemy.url", database_url)
+    config.set_main_option("sqlalchemy.url", _normalize_url(database_url))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -34,10 +47,11 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    url = _normalize_url(config.get_main_option("sqlalchemy.url"))
+    connectable = create_engine(
+        url,
         poolclass=pool.NullPool,
+        connect_args=_ssl_args(url),
     )
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

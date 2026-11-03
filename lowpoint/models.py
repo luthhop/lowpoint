@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -94,6 +95,9 @@ class OfferSnapshot(Base):
 
 class PriceHistory(Base):
     __tablename__ = "price_history"
+    __table_args__ = (
+        Index("ix_price_history_product_collected", "product_id", "collected_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     product_id: Mapped[int] = mapped_column(
@@ -111,6 +115,19 @@ class PriceHistory(Base):
     )
 
     product: Mapped["Product"] = relationship(back_populates="price_history")
+
+
+class MLToken(Base):
+    __tablename__ = "ml_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    access_token: Mapped[str] = mapped_column(String, nullable=False)
+    refresh_token: Mapped[str | None] = mapped_column(String, nullable=True)
+    expires_in: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
+    )
 
 
 class Alert(Base):
