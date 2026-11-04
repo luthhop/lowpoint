@@ -43,6 +43,7 @@ class AlertContext:
     is_official: bool
     suspect_count: int
     cheapest_suspect_price: Decimal | None = None
+    offer_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,10 @@ def _footer(ctx: AlertContext) -> str:
         parts.append(
             f"\nIgnorei um anúncio de {fmt_brl(ctx.cheapest_suspect_price)}, "
             f"bem abaixo do normal: costuma ser golpe."
+        )
+    if 0 < ctx.offer_count < 3:
+        parts.append(
+            "\n⚠ Poucos vendedores agora — confere antes de comprar."
         )
     return "".join(parts)
 

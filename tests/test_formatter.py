@@ -414,6 +414,22 @@ class TestFooter:
         ))
         assert "descartada" not in msg.text
 
+    def test_poucos_vendedores_com_1_oferta(self):
+        msg = format_alert(_ctx(offer_count=1))
+        assert "Poucos vendedores" in msg.text
+
+    def test_poucos_vendedores_com_2_ofertas(self):
+        msg = format_alert(_ctx(offer_count=2))
+        assert "Poucos vendedores" in msg.text
+
+    def test_sem_aviso_com_3_ofertas(self):
+        msg = format_alert(_ctx(offer_count=3))
+        assert "Poucos vendedores" not in msg.text
+
+    def test_sem_aviso_sem_offer_count(self):
+        msg = format_alert(_ctx())
+        assert "Poucos vendedores" not in msg.text
+
 
 class TestMaxOneEmoji:
     def test_real_one_emoji(self):

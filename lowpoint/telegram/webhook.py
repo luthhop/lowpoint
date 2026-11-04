@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from decimal import Decimal, InvalidOperation
+from statistics import median as _median
 
 from lowpoint.db import SessionLocal
 from lowpoint.models import PriceHistory, Product, Watch
@@ -152,10 +153,20 @@ def _fetch_live_price(catalog_id: str, product: Product) -> dict:
 
         source = MLCatalogSource()
         snapshot = source.fetch_catalog(catalog_id)
-        best = select_best_offer(snapshot.offers)
 
         session = SessionLocal()
         try:
+            hist_prices = [
+                Decimal(str(r.price))
+                for r in session.query(PriceHistory.price).filter(
+                    PriceHistory.product_id == product.id,
+                    PriceHistory.available.is_(True),
+                ).all()
+            ]
+            hist_median = _median(hist_prices) if hist_prices else None
+
+            best = select_best_offer(snapshot.offers, historical_median=hist_median)
+
             if snapshot.title and product.title.startswith("(pendente"):
                 p = session.query(Product).get(product.id)
                 if p:

@@ -75,7 +75,9 @@ def _build_history(session, product_id: int) -> list[PricePoint]:
     ]
 
 
-def send_alerts_after_collect(best: BestOfferResult, product: Product) -> None:
+def send_alerts_after_collect(
+    best: BestOfferResult, product: Product, *, offer_count: int = 0,
+) -> None:
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not bot_token:
         log.info("TELEGRAM_BOT_TOKEN ausente. Alertas desligados.")
@@ -121,6 +123,7 @@ def send_alerts_after_collect(best: BestOfferResult, product: Product) -> None:
         for watch in watches:
             _process_watch(
                 session, bot_token, watch, product, best, verdict, price, original_price,
+                offer_count=offer_count,
             )
 
         session.commit()
@@ -140,6 +143,8 @@ def _process_watch(
     verdict: VerdictResult,
     price: Decimal,
     original_price: Decimal | None,
+    *,
+    offer_count: int = 0,
 ) -> None:
     name = watch.nickname or product.title
     target = Decimal(str(watch.target_price))
@@ -165,6 +170,7 @@ def _process_watch(
         is_official=best.offer.official_store_id is not None,
         suspect_count=len(suspects),
         cheapest_suspect_price=cheapest_suspect,
+        offer_count=offer_count,
     )
 
     msg = format_alert(ctx)

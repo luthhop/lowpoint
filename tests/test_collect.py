@@ -193,6 +193,86 @@ class TestCollectOnce:
         assert db_session.query(PriceHistory).count() == 2
 
 
+class TestAnomalousCollection:
+    """Coletas com queda drástica de ofertas não geram alertas."""
+
+    def _seed_history(self, db_session, product, num_collections=5, offers_per=80):
+        """Cria coletas anteriores com muitas ofertas para estabelecer baseline."""
+        for i in range(num_collections):
+            ts = datetime(2026, 11, 1, i, 0, 0, tzinfo=timezone.utc)
+            for j in range(offers_per):
+                db_session.add(OfferSnapshot(
+                    product_id=product.id,
+                    item_id=f"MLB{i}_{j}",
+                    seller_id=j,
+                    price=Decimal("4000.00"),
+                    condition="new",
+                    official_store_id=None,
+                    free_shipping=True,
+                    warranty="12 meses",
+                    collected_at=ts,
+                ))
+            db_session.add(PriceHistory(
+                product_id=product.id,
+                price=Decimal("4000.00"),
+                original_price=None,
+                item_id=f"MLB{i}_0",
+                seller_id=0,
+                available=True,
+                collected_at=ts,
+            ))
+        db_session.commit()
+
+    def test_anomalous_suppresses_alerts(self, db_session, mock_source):
+        product = _seed_product_with_watch(db_session, "MLB_ANOM")
+        self._seed_history(db_session, product, num_collections=5, offers_per=80)
+
+        few_offers = [_make_offer(item_id=f"MLB_FEW_{i}", price=Decimal("3900.00")) for i in range(2)]
+        mock_source.set_response("MLB_ANOM", _make_snapshot("MLB_ANOM", few_offers))
+
+        with (
+            patch("lowpoint.collect.SessionLocal", return_value=db_session),
+            patch("lowpoint.collect.send_alerts_after_collect") as mock_alert,
+        ):
+            from lowpoint.collect import collect_once
+            collect_once(mock_source)
+
+        mock_alert.assert_not_called()
+        assert db_session.query(PriceHistory).filter_by(
+            product_id=product.id
+        ).count() == 6
+
+    def test_normal_collection_sends_alerts(self, db_session, mock_source):
+        product = _seed_product_with_watch(db_session, "MLB_NORM")
+        self._seed_history(db_session, product, num_collections=5, offers_per=80)
+
+        many_offers = [_make_offer(item_id=f"MLB_MANY_{i}", price=Decimal("3900.00")) for i in range(70)]
+        mock_source.set_response("MLB_NORM", _make_snapshot("MLB_NORM", many_offers))
+
+        with (
+            patch("lowpoint.collect.SessionLocal", return_value=db_session),
+            patch("lowpoint.collect.send_alerts_after_collect") as mock_alert,
+        ):
+            from lowpoint.collect import collect_once
+            collect_once(mock_source)
+
+        mock_alert.assert_called_once()
+
+    def test_first_collection_not_anomalous(self, db_session, mock_source):
+        product = _seed_product_with_watch(db_session, "MLB_FIRST")
+        few_offers = [_make_offer(item_id="MLB_ONE")]
+        mock_source.set_response("MLB_FIRST", _make_snapshot("MLB_FIRST", few_offers))
+
+        with (
+            patch("lowpoint.collect.SessionLocal", return_value=db_session),
+            patch("lowpoint.collect.send_alerts_after_collect") as mock_alert,
+        ):
+            from lowpoint.collect import collect_once
+            collect_once(mock_source)
+
+        mock_alert.assert_called_once()
+
+
 class TestAlertIsolation:
     """send_alerts_after_collect failures must never crash the collector."""
 

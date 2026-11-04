@@ -11,12 +11,18 @@ import time
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from sqlalchemy import func
+from statistics import median as _median
+
 from lowpoint.best_offer import select_best_offer
 from lowpoint.db import SessionLocal
 from lowpoint.models import OfferSnapshot, PriceHistory, Product, Watch
 from lowpoint.sources.base import PriceSource
 from lowpoint.sources.ml_catalog import MLCatalogSource
 from lowpoint.telegram.notify import send_alerts_after_collect
+
+ANOMALY_THRESHOLD = Decimal("0.30")
+ANOMALY_MIN_COLLECTIONS = 3
 
 logging.basicConfig(
     level=logging.INFO,
@@ -83,7 +89,19 @@ def _collect_product(
             )
         )
 
-    best = select_best_offer(snapshot.offers)
+    hist_prices = [
+        Decimal(str(r.price))
+        for r in session.query(PriceHistory.price).filter(
+            PriceHistory.product_id == product.id,
+            PriceHistory.available.is_(True),
+        ).all()
+    ]
+    hist_median = _median(hist_prices) if hist_prices else None
+
+    best = select_best_offer(snapshot.offers, historical_median=hist_median)
+
+    current_count = len(snapshot.offers)
+    anomalous = _is_anomalous_collection(session, product.id, current_count)
 
     if best:
         session.add(
@@ -100,7 +118,7 @@ def _collect_product(
         log.info(
             "%s | %d ofertas | melhor: R$ %.2f (seller %d, item %s)%s",
             product.catalog_product_id,
-            len(snapshot.offers),
+            current_count,
             best.offer.price,
             best.offer.seller_id,
             best.offer.item_id,
@@ -121,16 +139,42 @@ def _collect_product(
         log.warning(
             "%s | %d ofertas | nenhuma oferta nova válida",
             product.catalog_product_id,
-            len(snapshot.offers),
+            current_count,
         )
 
     session.commit()
 
-    if best:
+    if anomalous:
+        log.warning(
+            "Coleta anômala para %s: %d ofertas (muito abaixo do normal). "
+            "Dados gravados, alertas suprimidos.",
+            product.catalog_product_id, current_count,
+        )
+    elif best:
         try:
-            send_alerts_after_collect(best, product)
+            send_alerts_after_collect(best, product, offer_count=current_count)
         except Exception:
             log.exception("Erro ao enviar alertas para %s", product.catalog_product_id)
+
+
+def _is_anomalous_collection(
+    session, product_id: int, current_count: int
+) -> bool:
+    recent = (
+        session.query(func.count(OfferSnapshot.id))
+        .filter(OfferSnapshot.product_id == product_id)
+        .group_by(OfferSnapshot.collected_at)
+        .order_by(OfferSnapshot.collected_at.desc())
+        .limit(10)
+        .all()
+    )
+    counts = [row[0] for row in recent]
+    if len(counts) < ANOMALY_MIN_COLLECTIONS:
+        return False
+    avg = _median(counts)
+    if avg <= 0:
+        return False
+    return Decimal(str(current_count)) < Decimal(str(avg)) * ANOMALY_THRESHOLD
 
 
 def main() -> None:

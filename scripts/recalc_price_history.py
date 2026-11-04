@@ -5,6 +5,7 @@ import sys
 sys.path.insert(0, ".")
 
 from decimal import Decimal
+from statistics import median as _median
 
 from lowpoint.best_offer import select_best_offer
 from lowpoint.db import SessionLocal
@@ -21,9 +22,11 @@ def recalculate(dry_run: bool = False) -> None:
                 OfferSnapshot.collected_at,
             )
             .distinct()
+            .order_by(OfferSnapshot.product_id, OfferSnapshot.collected_at)
             .all()
         )
 
+        prior_prices: dict[int, list[Decimal]] = {}
         updated = 0
         for product_id, collected_at in collections:
             snapshots = (
@@ -46,7 +49,10 @@ def recalculate(dry_run: bool = False) -> None:
                 for s in snapshots
             ]
 
-            best = select_best_offer(offers)
+            prices_so_far = prior_prices.get(product_id, [])
+            hist_median = _median(prices_so_far) if prices_so_far else None
+
+            best = select_best_offer(offers, historical_median=hist_median)
 
             ph = (
                 session.query(PriceHistory)
@@ -71,6 +77,10 @@ def recalculate(dry_run: bool = False) -> None:
                     )
                     if best.warnings:
                         print(f"    avisos: {', '.join(best.warnings)}")
+                if ph.available:
+                    prior_prices.setdefault(product_id, []).append(
+                        Decimal(str(ph.price if dry_run else best.offer.price))
+                    )
             elif best and not ph:
                 if not dry_run:
                     session.add(
@@ -86,6 +96,7 @@ def recalculate(dry_run: bool = False) -> None:
                     )
                 updated += 1
                 print(f"  {product_id} @ {collected_at}: CRIADO R$ {best.offer.price}")
+                prior_prices.setdefault(product_id, []).append(best.offer.price)
             elif not best and ph and ph.available:
                 if not dry_run:
                     ph.price = Decimal("0")
@@ -94,7 +105,12 @@ def recalculate(dry_run: bool = False) -> None:
                     ph.seller_id = 0
                     ph.available = False
                 updated += 1
-                print(f"  {product_id} @ {collected_at}: → indisponível")
+                print(f"  {product_id} @ {collected_at}: -> indisponivel")
+            else:
+                if ph and ph.available:
+                    prior_prices.setdefault(product_id, []).append(
+                        Decimal(str(ph.price))
+                    )
 
         if not dry_run:
             session.commit()
@@ -114,7 +130,7 @@ if __name__ == "__main__":
         description="Recalcula price_history com a regra atualizada"
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="Mostra mudanças sem aplicar"
+        "--dry-run", action="store_true", help="Mostra mudancas sem aplicar"
     )
     args = parser.parse_args()
     recalculate(dry_run=args.dry_run)

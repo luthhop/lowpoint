@@ -194,7 +194,7 @@ class TestOfertaSuspeita:
         assert result is not None
         assert any("suspeita" in w for w in result.warnings)
 
-    def test_sem_deteccao_com_poucas_ofertas(self):
+    def test_sem_deteccao_com_poucas_ofertas_sem_historico(self):
         offers = [_offer(100), _offer(1000)]
         result = select_best_offer(offers)
         assert result is not None
@@ -221,6 +221,117 @@ class TestOfertaSuspeita:
         assert result is not None
         assert result.offer.price == Decimal("950")
         assert result.suspect_offers == []
+
+
+class TestHistoricalMedianFallback:
+    """Quando < 3 ofertas, historical_median serve de referência anti-golpe."""
+
+    def test_suspeita_com_historical_median_e_2_ofertas(self):
+        offers = [_offer(1500, item_id="GOLPE"), _offer(4000)]
+        result = select_best_offer(offers, historical_median=Decimal("4100"))
+        assert result is not None
+        # cutoff = 4100 * 0.60 = 2460 → R$ 1500 < 2460 → suspeita
+        assert result.offer.price == Decimal("4000")
+        assert len(result.suspect_offers) == 1
+        assert result.suspect_offers[0].price == Decimal("1500")
+
+    def test_suspeita_com_historical_median_e_1_oferta(self):
+        offers = [_offer(1500)]
+        result = select_best_offer(offers, historical_median=Decimal("4100"))
+        # única oferta é suspeita → nenhuma elegível → None
+        assert result is None
+
+    def test_sem_historico_com_2_ofertas_nao_filtra(self):
+        offers = [_offer(1500), _offer(4000)]
+        result = select_best_offer(offers)
+        assert result is not None
+        assert result.offer.price == Decimal("1500")
+        assert result.suspect_offers == []
+
+    def test_historical_median_nao_interfere_com_3_ofertas(self):
+        offers = [_offer(1500), _offer(4000), _offer(4200)]
+        # mediana coleta = 4000, cutoff = 2400 → 1500 suspeita (filtro normal)
+        result = select_best_offer(offers, historical_median=Decimal("4100"))
+        assert result is not None
+        assert result.offer.price == Decimal("4000")
+        assert len(result.suspect_offers) == 1
+
+    def test_preco_acima_do_cutoff_historico_nao_e_suspeito(self):
+        offers = [_offer(3000), _offer(4000)]
+        # cutoff = 4100 * 0.60 = 2460 → 3000 > 2460 → não suspeita
+        result = select_best_offer(offers, historical_median=Decimal("4100"))
+        assert result is not None
+        assert result.offer.price == Decimal("3000")
+        assert result.suspect_offers == []
+
+
+class TestBugPS5TargetHitSuspeita:
+    """Reproduz o bug: alerta target_hit com oferta suspeita de R$ 1.500 para PS5."""
+
+    def test_ps5_r1500_com_poucas_ofertas_sem_historico_bug(self):
+        """Cenário do bug: < 3 ofertas, sem historical_median → golpe passa."""
+        offers = [
+            _offer(
+                1500.00,
+                warranty="Garantia de fábrica: 12 meses",
+                official_store_id=1473,
+                seller_id=99999,
+                item_id="MLBGOLPE",
+            ),
+            _offer(
+                4599.90,
+                warranty="Garantia de fábrica: 12 meses",
+                official_store_id=1473,
+                seller_id=480263032,
+                item_id="MLB4214670787",
+            ),
+        ]
+        result = select_best_offer(offers)
+        assert result is not None
+        # BUG: sem historical_median, o golpe passa
+        assert result.offer.price == Decimal("1500")
+
+    def test_ps5_r1500_com_poucas_ofertas_com_historico_fix(self):
+        """Com historical_median, o golpe é filtrado."""
+        offers = [
+            _offer(
+                1500.00,
+                warranty="Garantia de fábrica: 12 meses",
+                official_store_id=1473,
+                seller_id=99999,
+                item_id="MLBGOLPE",
+            ),
+            _offer(
+                4599.90,
+                warranty="Garantia de fábrica: 12 meses",
+                official_store_id=1473,
+                seller_id=480263032,
+                item_id="MLB4214670787",
+            ),
+        ]
+        result = select_best_offer(
+            offers, historical_median=Decimal("4121.51")
+        )
+        assert result is not None
+        assert result.offer.price == Decimal("4599.90")
+        assert len(result.suspect_offers) == 1
+        assert result.suspect_offers[0].item_id == "MLBGOLPE"
+
+    def test_ps5_r1500_unica_oferta_com_historico(self):
+        """Se a única oferta é suspeita, retorna None (indisponível)."""
+        offers = [
+            _offer(
+                1500.00,
+                warranty="Garantia de fábrica: 12 meses",
+                official_store_id=1473,
+                seller_id=99999,
+                item_id="MLBGOLPE",
+            ),
+        ]
+        result = select_best_offer(
+            offers, historical_median=Decimal("4121.51")
+        )
+        assert result is None
 
 
 class TestCasoRealPS5:

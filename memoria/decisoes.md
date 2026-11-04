@@ -41,3 +41,8 @@
 - Ofertas suspeitas: sem alerta próprio, viram rodapé nos outros alertas. "Sem garantia" é aviso de destaque; "vendedor não-oficial" discreto
 - /remover e escolhas usam inline buttons (callback_query), sem estado de conversa no webhook
 - /adicionar aceita apelido opcional; sem apelido, usa título do produto
+- Target hit com histórico curto (<7 dias): alerta com 🎯 sem afirmar desconto real. Maquiado prevalece sobre neutro
+- /adicionar grava PriceHistory na hora para /lista mostrar "Agora:" imediatamente
+- Filtro anti-golpe com fallback: quando coleta traz < 3 ofertas, usa mediana histórica (price_history) para detectar suspeitas. Sem histórico E < 3 ofertas = sem filtro (produto novo)
+- Coleta anômala: se ofertas < 30% da mediana das últimas 10 coletas, dados gravados mas alertas suprimidos. Mínimo 3 coletas anteriores para ativar detecção
+- Footer com aviso "poucos vendedores" quando < 3 ofertas na coleta (qualquer tipo de alerta)

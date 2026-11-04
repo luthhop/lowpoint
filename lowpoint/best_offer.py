@@ -22,16 +22,19 @@ def select_best_offer(
     *,
     require_warranty: bool = False,
     suspect_threshold: Decimal = Decimal("0.60"),
+    historical_median: Decimal | None = None,
 ) -> BestOfferResult | None:
     new_offers = [o for o in offers if o.condition == "new"]
     if not new_offers:
         return None
 
-    # >= 3 ofertas para mediana ter significado estatístico
     suspect_offers: list[OfferData] = []
     if len(new_offers) >= 3:
         med = _median([o.price for o in new_offers])
         cutoff = med * suspect_threshold
+        suspect_offers = [o for o in new_offers if o.price < cutoff]
+    elif historical_median is not None and historical_median > 0:
+        cutoff = historical_median * suspect_threshold
         suspect_offers = [o for o in new_offers if o.price < cutoff]
 
     eligible = [o for o in new_offers if o not in suspect_offers]

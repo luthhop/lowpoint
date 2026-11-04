@@ -7,10 +7,17 @@
 - Bot Telegram funcionando: /adicionar /lista /remover /apelido
 - Alertas com veredito integrados no coletor (após cada coleta)
 - Webhook Vercel (api/webhook.py) deployado e respondendo
-- Anti-spam, nickname, inline buttons, plural correto em textos
-- Scripts: telegram_whoami, set_webhook, update_chat_id, preview_alerts
-- 120 testes passando
-- **Pendente:** TELEGRAM_BOT_TOKEN no GitHub Actions, apelidos nos watches existentes
+## Sprint 3 — em andamento
+- Tudo de antes +
+- Fix: filtro anti-golpe com historical_median (< 3 ofertas usa mediana do histórico)
+- Coleta anômala: se ofertas caem a < 30% do normal, grava dados mas suprime alertas
+- Aviso "poucos vendedores" no footer quando < 3 ofertas
+- recalc_price_history.py atualizado com historical_median cronológico
+- 162 testes passando
+## Pendências
+- Remover alerta espúrio id=1 (R$ 1.500 do PS5, gerado em teste local)
+- Remover "Fone Teste" (watch id=3, já inativo)
+- Deploy do fix (push + redeploy Vercel)
 ## Plano até Black Friday
-- Semana 3 (até 22/11): veredito refinado nos alertas, bot rodando 24/7
-- Pós-BF: telas no Paper, dashboard, landing page, análise dos dados
+- Semana 3 (até 22/11): veredito refinado, bot 24/7
+- Pós-BF: telas no Paper, dashboard, landing page
