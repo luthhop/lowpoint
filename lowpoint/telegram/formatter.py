@@ -74,7 +74,7 @@ def _footer(ctx: AlertContext) -> str:
         )
     if 0 < ctx.offer_count < 3:
         parts.append(
-            "\n⚠ Poucos vendedores agora — confere antes de comprar."
+            "\nPoucos vendedores agora — confere antes de comprar."
         )
     return "".join(parts)
 
