@@ -252,6 +252,101 @@ class TestFormatAlertTargetHitMaquiado:
         assert "mediana" not in msg.text.lower()
 
 
+class TestFormatAlertTargetHitNeutro:
+    def test_alert_type(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=0,
+        ))
+        assert msg.alert_type == "target_hit"
+
+    def test_emoji_and_text(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=0,
+        ))
+        assert "🎯" in msg.text
+        assert "R$ 192,80" in msg.text
+        assert "bateu teu alvo" in msg.text
+        assert "desde hoje" in msg.text
+        assert "não dá pra dizer" in msg.text
+        assert "O alvo é teu" in msg.text
+
+    def test_no_verdict_claim(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=0,
+        ))
+        assert "PODE IR" not in msg.text
+        assert "SEGURA" not in msg.text
+        assert "Pode ir." not in msg.text
+        assert "Segura." not in msg.text
+
+    def test_with_few_days(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=3,
+        ))
+        assert "3 dias" in msg.text
+        assert "desde hoje" not in msg.text
+
+    def test_footer_preserved(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=0,
+            has_warranty=False,
+            suspect_count=2,
+            cheapest_suspect_price=Decimal("50.00"),
+        ))
+        assert "Sem garantia" in msg.text
+        assert "golpe" in msg.text
+
+    def test_button(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=0,
+        ))
+        assert msg.button_text == "Ver oferta"
+        assert "MLB-4001551723" in msg.button_url
+
+    def test_max_one_emoji(self):
+        msg = format_alert(_ctx(
+            verdict="neutro",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=0,
+            has_warranty=False,
+            suspect_count=2,
+            cheapest_suspect_price=Decimal("50.00"),
+        ))
+        assert msg.text.count("🎯") == 1
+        assert "✅" not in msg.text
+        assert "⚠" not in msg.text
+
+    def test_maquiado_prevails(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("192.80"),
+            target_price=Decimal("200.00"),
+            monitoring_days=30,
+            median_30d=Decimal("195.00"),
+        ))
+        assert msg.alert_type == "target_hit_maquiado"
+        assert "SEGURA" in msg.text
+
+
 class TestFormatAlertNeutro:
     def test_alert_type(self):
         msg = format_alert(_ctx(

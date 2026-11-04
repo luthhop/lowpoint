@@ -145,24 +145,38 @@ class TestListaDesdeHoje:
 
 
 class TestAdicionarLivePrice:
-    def test_shows_price_on_success(self, db_session):
+    def _mock_snapshot(self):
         from unittest.mock import MagicMock
-        from lowpoint.models import Product as Prod
+        from datetime import datetime, timezone
+
+        mock_snapshot = MagicMock()
+        mock_snapshot.title = "Console PS5"
+        mock_snapshot.image_url = None
+        mock_snapshot.collected_at = datetime.now(timezone.utc)
+        mock_snapshot.offers = [MagicMock()]
+        mock_snapshot.offers[0].price = Decimal("3200.00")
+
+        mock_best = MagicMock()
+        mock_best.offer.price = Decimal("3200.00")
+        mock_best.offer.original_price = None
+        mock_best.offer.item_id = "MLB123456"
+        mock_best.offer.seller_id = 12345
+
+        return mock_snapshot, mock_best
+
+    def _mock_product_watch(self):
+        from unittest.mock import MagicMock
 
         mock_product = MagicMock()
         mock_product.id = 1
         mock_product.title = "(pendente)"
         mock_watch = MagicMock()
         mock_watch.id = 1
+        return mock_product, mock_watch
 
-        mock_snapshot = MagicMock()
-        mock_snapshot.title = "Console PS5"
-        mock_snapshot.image_url = None
-        mock_snapshot.offers = [MagicMock()]
-        mock_snapshot.offers[0].price = Decimal("3200.00")
-
-        mock_best = MagicMock()
-        mock_best.offer.price = Decimal("3200.00")
+    def test_shows_price_on_success(self, db_session):
+        mock_product, mock_watch = self._mock_product_watch()
+        mock_snapshot, mock_best = self._mock_snapshot()
 
         with (
             patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),
@@ -179,14 +193,58 @@ class TestAdicionarLivePrice:
         assert "R$ 3.200,00" in result["text"]
         assert "Console PS5" in result["text"]
 
-    def test_fallback_on_failure(self, db_session):
+    def test_saves_price_history(self, db_session):
+        from lowpoint.models import PriceHistory
+
+        mock_product, mock_watch = self._mock_product_watch()
+        mock_snapshot, mock_best = self._mock_snapshot()
+
+        with (
+            patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),
+            patch("lowpoint.telegram.webhook.extract_catalog_id", return_value="MLB57081243"),
+            patch("lowpoint.telegram.webhook.register_product", return_value=(mock_product, mock_watch)),
+            patch("lowpoint.telegram.webhook.select_best_offer", return_value=mock_best),
+            patch("lowpoint.sources.ml_catalog.MLCatalogSource.fetch_catalog", return_value=mock_snapshot),
+        ):
+            handle_update(
+                _update("/adicionar mercadolivre.com.br/p/MLB57081243 3500"),
+                "test-secret",
+            )
+
+        row = db_session.query(PriceHistory).first()
+        assert row is not None
+        assert row.price == Decimal("3200.00")
+        assert row.available is True
+
+    def test_shows_title_with_nickname(self, db_session):
+        product, watch = _seed(db_session)
         from unittest.mock import MagicMock
 
         mock_product = MagicMock()
-        mock_product.id = 1
+        mock_product.id = product.id
         mock_product.title = "(pendente)"
         mock_watch = MagicMock()
-        mock_watch.id = 1
+        mock_watch.id = watch.id
+
+        mock_snapshot, mock_best = self._mock_snapshot()
+
+        with (
+            patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),
+            patch("lowpoint.telegram.webhook.extract_catalog_id", return_value="MLB57081243"),
+            patch("lowpoint.telegram.webhook.register_product", return_value=(mock_product, mock_watch)),
+            patch("lowpoint.telegram.webhook.select_best_offer", return_value=mock_best),
+            patch("lowpoint.sources.ml_catalog.MLCatalogSource.fetch_catalog", return_value=mock_snapshot),
+        ):
+            result = handle_update(
+                _update("/adicionar mercadolivre.com.br/p/MLB57081243 3500 Fone"),
+                "test-secret",
+            )
+
+        assert "<b>Fone</b>" in result["text"]
+        assert "Console PS5" in result["text"]
+
+    def test_fallback_on_failure(self, db_session):
+        mock_product, mock_watch = self._mock_product_watch()
 
         with (
             patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),

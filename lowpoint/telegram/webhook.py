@@ -121,15 +121,18 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
             session.close()
 
     live = _fetch_live_price(catalog_id, product)
-    display_name = nickname or live.get("title") or product.title
-    if display_name.startswith("(pendente"):
-        display_name = catalog_id
+    title = live.get("title") or product.title
+    if title.startswith("(pendente"):
+        title = None
+    display_name = nickname or title or catalog_id
 
     lines = [
         f"Pronto. Monitorando:\n",
         f"<b>{display_name}</b>",
-        f"Alvo: {fmt_brl(target)}",
     ]
+    if nickname and title:
+        lines.append(title)
+    lines.append(f"Alvo: {fmt_brl(target)}")
 
     if live.get("price"):
         lines.append(f"Agora: {fmt_brl(live['price'])}")
@@ -149,20 +152,32 @@ def _fetch_live_price(catalog_id: str, product: Product) -> dict:
 
         source = MLCatalogSource()
         snapshot = source.fetch_catalog(catalog_id)
+        best = select_best_offer(snapshot.offers)
 
-        if snapshot.title and product.title.startswith("(pendente"):
-            session = SessionLocal()
-            try:
+        session = SessionLocal()
+        try:
+            if snapshot.title and product.title.startswith("(pendente"):
                 p = session.query(Product).get(product.id)
                 if p:
                     p.title = snapshot.title
                     if snapshot.image_url:
                         p.image_url = snapshot.image_url
-                    session.commit()
-            finally:
-                session.close()
 
-        best = select_best_offer(snapshot.offers)
+            if best:
+                session.add(PriceHistory(
+                    product_id=product.id,
+                    price=best.offer.price,
+                    original_price=best.offer.original_price,
+                    item_id=best.offer.item_id,
+                    seller_id=best.offer.seller_id,
+                    available=True,
+                    collected_at=snapshot.collected_at,
+                ))
+
+            session.commit()
+        finally:
+            session.close()
+
         return {
             "title": snapshot.title,
             "price": best.offer.price if best else None,

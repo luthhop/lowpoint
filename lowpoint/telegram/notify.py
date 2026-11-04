@@ -78,6 +78,7 @@ def _build_history(session, product_id: int) -> list[PricePoint]:
 def send_alerts_after_collect(best: BestOfferResult, product: Product) -> None:
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not bot_token:
+        log.info("TELEGRAM_BOT_TOKEN ausente. Alertas desligados.")
         return
 
     session = SessionLocal()
@@ -88,6 +89,7 @@ def send_alerts_after_collect(best: BestOfferResult, product: Product) -> None:
             .all()
         )
         if not watches:
+            log.info("Nenhum watch ativo para %s.", product.catalog_product_id)
             return
 
         history = _build_history(session, product.id)
@@ -101,7 +103,20 @@ def send_alerts_after_collect(best: BestOfferResult, product: Product) -> None:
         verdict = compute_verdict(price, original_price, history)
 
         if verdict.verdict == "neutro":
-            return
+            watches = [
+                w for w in watches
+                if price <= Decimal(str(w.target_price))
+            ]
+            if not watches:
+                log.info(
+                    "Veredito neutro sem target_hit para %s (R$ %s). Pulando.",
+                    product.catalog_product_id, price,
+                )
+                return
+            log.info(
+                "Veredito neutro com target_hit para %s (R$ %s).",
+                product.catalog_product_id, price,
+            )
 
         for watch in watches:
             _process_watch(

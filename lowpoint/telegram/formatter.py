@@ -88,6 +88,8 @@ def format_alert(ctx: AlertContext) -> AlertMessage:
         return _format_target_hit_maquiado(ctx)
     if target_hit and ctx.verdict == "real":
         return _format_target_hit_real(ctx)
+    if target_hit and ctx.verdict == "neutro":
+        return _format_target_hit_neutro(ctx)
     if ctx.verdict == "real":
         return _format_verdict_real(ctx)
     if ctx.verdict == "maquiado":
@@ -114,6 +116,25 @@ def _format_target_hit_real(ctx: AlertContext) -> AlertMessage:
         lines.append(f"Preço normal: {fmt_brl(ctx.median_30d)}")
     if ctx.lowest_price and ctx.lowest_price != ctx.price:
         lines.append(f"Menor anterior: {fmt_brl(ctx.lowest_price)}")
+    lines.append(_footer(ctx))
+    return AlertMessage(
+        text="\n".join(lines),
+        parse_mode="HTML",
+        button_text="Ver oferta",
+        button_url=item_url(ctx.item_id),
+        alert_type="target_hit",
+    )
+
+
+def _format_target_hit_neutro(ctx: AlertContext) -> AlertMessage:
+    name = escape(ctx.product_name)
+    since = "desde hoje" if ctx.monitoring_days == 0 else f"há {_dias(ctx.monitoring_days)}"
+    lines = [
+        f"🎯 <b>{name}</b> bateu teu alvo: <b>{fmt_brl(ctx.price)}</b>.",
+        "",
+        f"Ainda tô conhecendo esse produto (monitorando {since}), "
+        f"então não dá pra dizer se o desconto é de verdade. O alvo é teu.",
+    ]
     lines.append(_footer(ctx))
     return AlertMessage(
         text="\n".join(lines),
