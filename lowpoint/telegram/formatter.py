@@ -9,6 +9,8 @@ def fmt_brl(value: Decimal) -> str:
 
 
 def _dias(n: int) -> str:
+    if n == 0:
+        return "hoje"
     return "1 dia" if n == 1 else f"{n} dias"
 
 
@@ -162,9 +164,9 @@ def _format_maquiado(ctx: AlertContext) -> AlertMessage:
         increase = ((ctx.price - ctx.pre_hike_price) / ctx.pre_hike_price) * 100
         lines.append(
             f"Subiram pra baixar. Preço subiu {increase:.0f}% nas 2 semanas "
-            f'antes da "queda" (era {fmt_brl(ctx.pre_hike_price)}).'
+            f'antes da "queda" (era {fmt_brl(ctx.pre_hike_price)}). Segura.'
         )
-    elif not claimed:
+    else:
         lines.append("Subiram pra baixar. Segura.")
     lines.append(_footer(ctx))
     return AlertMessage(
@@ -182,7 +184,7 @@ def _format_target_hit_maquiado(ctx: AlertContext) -> AlertMessage:
     lines.append("")
     lines.append(
         f"Bateu teu alvo de {fmt_brl(ctx.target_price)}, "
-        f"mas subiram pra baixar."
+        f"mas subiram pra baixar. Segura."
     )
     claimed = _claimed_discount(ctx)
     if claimed:

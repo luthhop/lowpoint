@@ -6,6 +6,7 @@ from decimal import Decimal, InvalidOperation
 from lowpoint.db import SessionLocal
 from lowpoint.models import PriceHistory, Product, Watch
 from lowpoint.register import extract_catalog_id, register_product
+from lowpoint.best_offer import select_best_offer
 from lowpoint.telegram.formatter import _dias, fmt_brl
 from lowpoint.telegram.security import (
     UNAUTHORIZED_MESSAGE,
@@ -119,17 +120,57 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
         finally:
             session.close()
 
-    display_name = nickname or product.title
+    live = _fetch_live_price(catalog_id, product)
+    display_name = nickname or live.get("title") or product.title
     if display_name.startswith("(pendente"):
         display_name = catalog_id
 
-    return _reply(
-        chat_id,
-        f"Pronto. Monitorando:\n\n"
-        f"<b>{display_name}</b>\n"
-        f"Alvo: {fmt_brl(target)}\n"
-        f"Coleta a cada hora. Te aviso quando chegar lá.",
-    )
+    lines = [
+        f"Pronto. Monitorando:\n",
+        f"<b>{display_name}</b>",
+        f"Alvo: {fmt_brl(target)}",
+    ]
+
+    if live.get("price"):
+        lines.append(f"Agora: {fmt_brl(live['price'])}")
+        if live.get("offers"):
+            lines.append(f"{live['offers']} ofertas disponíveis")
+    else:
+        lines.append("Preço chega na próxima coleta.")
+
+    lines.append("\nTe aviso quando chegar lá.")
+
+    return _reply(chat_id, "\n".join(lines))
+
+
+def _fetch_live_price(catalog_id: str, product: Product) -> dict:
+    try:
+        from lowpoint.sources.ml_catalog import MLCatalogSource
+
+        source = MLCatalogSource()
+        snapshot = source.fetch_catalog(catalog_id)
+
+        if snapshot.title and product.title.startswith("(pendente"):
+            session = SessionLocal()
+            try:
+                p = session.query(Product).get(product.id)
+                if p:
+                    p.title = snapshot.title
+                    if snapshot.image_url:
+                        p.image_url = snapshot.image_url
+                    session.commit()
+            finally:
+                session.close()
+
+        best = select_best_offer(snapshot.offers)
+        return {
+            "title": snapshot.title,
+            "price": best.offer.price if best else None,
+            "offers": len(snapshot.offers) if snapshot.offers else 0,
+        }
+    except Exception:
+        log.exception("Falha ao buscar preço ao vivo para %s", catalog_id)
+        return {}
 
 
 def _cmd_lista(chat_id: int) -> dict:
@@ -166,10 +207,11 @@ def _cmd_lista(chat_id: int) -> dict:
                 if last
                 else 0
             )
+            since = "desde hoje" if days == 0 else f"há {_dias(days)}"
             lines.append(
                 f"{i}. <b>{name}</b>\n"
                 f"   Agora: {price_str} · Alvo: {target}\n"
-                f"   Monitorando há {_dias(days)}"
+                f"   Monitorando {since}"
             )
 
         return _reply(chat_id, "\n".join(lines))

@@ -166,6 +166,24 @@ class TestFormatAlertMaquiado:
         assert "2 semanas" in msg.text
         assert "14d" not in msg.text
 
+    def test_always_ends_with_segura(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3600.00"),
+            pre_hike_price=Decimal("3300.00"),
+            median_30d=Decimal("3450.00"),
+        ))
+        assert "Segura." in msg.text
+
+    def test_segura_without_pre_hike(self):
+        msg = format_alert(_ctx(
+            verdict="maquiado",
+            price=Decimal("3600.00"),
+            original_price=Decimal("6000.00"),
+            median_30d=Decimal("3450.00"),
+        ))
+        assert "Segura." in msg.text
+
     def test_preco_normal_no_ultimo_mes(self):
         msg = format_alert(_ctx(
             verdict="maquiado",
@@ -215,6 +233,7 @@ class TestFormatAlertTargetHitMaquiado:
         ))
         assert "teu alvo" in msg.text
         assert "subiram pra baixar" in msg.text
+        assert "Segura." in msg.text
 
     def test_first_line_segura(self):
         msg = format_alert(_ctx(
@@ -347,7 +366,7 @@ class TestDias:
         assert _dias(30) == "30 dias"
 
     def test_zero(self):
-        assert _dias(0) == "0 dias"
+        assert _dias(0) == "hoje"
 
 
 class TestPluralInAlerts:
