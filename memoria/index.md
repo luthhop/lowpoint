@@ -10,6 +10,10 @@
 - [Marca](produto/marca.md) — nome (Lowpoint), personalidade, tom de voz, direções visuais
 
 ## Design
+- [Landing — fluxo A + B](design/landing-fluxo-consolidado.md) — combinação aprovada, sequência contínua desktop/mobile e pendências
+- [Landing — direções A e B](design/landing-direcoes-a-b.md) — alternativas de hero desktop/mobile, movimento proposto e revisão
+- [Landing Investigação v1](design/landing-investigacao-v1.md) — primeiras pranchas desktop/mobile no Paper, exports e coreografia proposta
+- [Referências da landing](design/referencias-landing.md) — Money Flow + FitFolio, observações e direção proposta de movimento
 - [Validação pós-pico](design/validacao-pos-pico.md) — regra corrigida, simulação local e textos de 4%, 10%, 20%
 - [Brand board](design/brand-board.png) — board completo exportado do Paper
 - [Wireframe Landing](design/wireframe-landing.md) — wireframe v7 da landing, validado contra o código

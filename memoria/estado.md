@@ -14,7 +14,7 @@
 ## Design e landing
 - Branding completo no Paper; conexão Paper operacional no Codex
 - Wireframe v7: memoria/design/wireframe-landing.md (nota pós-pico atualizada)
-- Pendente: CTAs, hero subtitle, “Grátis”, “30 segundos”, FAQ conta → Paper → aprovação
+- Lucas aprovou A na abertura + B no desfecho; fluxo contínuo desktop/mobile no Paper; design/landing-fluxo-consolidado.md
 ## Retomada
 - Lote validado: correções pós-pico + textos e documentação; push autorizado por Lucas
 - Remover “Fone Teste” (watch id=3) continua pendente; sem mudanças em produção nesta sessão
