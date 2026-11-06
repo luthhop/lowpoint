@@ -47,8 +47,8 @@ O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 - [x] Bot Telegram (`/adicionar`, `/lista`, `/remover`, `/apelido`, alertas com veredito)
 - [x] Webhook serverless na Vercel
 - [ ] Veredito em tempo real nos alertas refinado, bot rodando 24/7
-- [x] Landing page responsiva (design no Paper, implementação local)
-- [ ] Publicação da landing + dashboard
+- [x] Landing page responsiva (design no Paper, publicada em https://lowpoint-web.vercel.app)
+- [ ] Dashboard
 - [ ] Análise de dados: os descontos da Black Friday 2026 eram reais?
 
 ## Arquitetura

@@ -18,7 +18,7 @@ Movimento: entrada da etiqueta, traço de investigação, carimbo, revelações 
 
 `frontend/src/data/demo-history.json` contém dados fictícios explícitos em centavos inteiros. Mantém os preços principais aprovados e pequenas variações anteriores como amostras, não como oscilações artificiais de interpolação. Eixo horizontal narrativo; mesma escala vertical entre as cenas. Curva monotônica com controles limitados ao intervalo de cada par de preços; termina na amostra atual. Testes Python conferem que o exemplo gera maquiado em 27/Nov e real em 02/Dez usando o motor do bot.
 
-A landing não chama API de preços, banco ou Telegram. Comandos são exemplos. CTA final aponta para o GitHub, pois o bot continua em teste pessoal. Configuração e deploy do webhook Vercel preservados. Publicação do site não foi realizada.
+A landing não chama API de preços, banco ou Telegram. Comandos são exemplos. CTA final aponta para o GitHub, pois o bot continua em teste pessoal. Configuração e deploy do webhook Vercel preservados. Landing publicada em https://lowpoint-web.vercel.app, em projeto separado `lowpoint-web`.
 
 ## Verificação
 
@@ -34,6 +34,6 @@ A landing não chama API de preços, banco ou Telegram. Comandos são exemplos. 
 
 Rodar `cd frontend`, `npm ci` e `npm run dev`; prévia em http://127.0.0.1:5173/. Para produção local, `npm run build` e `npm run preview`.
 
-Próxima decisão: publicação estática em projeto separado, usando raiz `frontend`, build `npm run build` e saída `dist`. Não substituir o `vercel.json` do webhook.
+Publicação autorizada por Lucas e concluída no projeto `lowpoint-web`, conectado ao GitHub `luthhop/lowpoint`. Configuração: raiz `frontend`, Node 26.x, instalação `npm ci`, build `npm run build`, saída `dist`. Deploy inicial `dpl_nrjn2DPDn3513c4fCFhfWqhF617y` em READY; URL pública https://lowpoint-web.vercel.app verificada com HTTP 200 e navegador sem login. Webhook e seu `vercel.json` preservados. O primeiro deploy foi feito pela CLI na pasta frontend antes de configurar a raiz remota; próximos deploys automáticos usam frontend no GitHub.
 
 Durante a implementação surgiram alterações paralelas em `lowpoint/verdict.py`, `lowpoint/telegram/formatter.py` e `tests/test_landing_story.py`. Não foram feitas pelo Codex nesta etapa e foram preservadas fora do commit do frontend.

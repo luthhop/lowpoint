@@ -59,3 +59,5 @@
 - Landing (2026-11-05): Lucas aprovou abertura A (investigação editorial) + desfecho B (ponto mais baixo, fundo Ink). Gráfico com traço fluido, mantendo o histórico como evidência; fluxo e pendências em design/landing-fluxo-consolidado.md. Aprovação da direção não libera implementação das seções ainda não desenhadas.
 - Frontend (2026-11-05): Lucas aprovou todas as seções; implementação local em frontend/ com React + TypeScript + Vite, CSS próprio, SVG e movimento nativo. Fontes locais; valores em centavos; fixture verificado contra o veredito Python.
 - Publicação frontend: separar a landing estática do webhook Vercel existente. Acesso atual pessoal informado na página, CTA para GitHub; nenhum cadastro público ou integração nova com produção nesta etapa.
+
+- Publicação autorizada por Lucas (2026-11-05): landing em https://lowpoint-web.vercel.app, projeto Vercel `lowpoint-web` separado do webhook `lowpoint`; GitHub conectado com raiz `frontend`, Node 26.x, npm ci/build e dist. Acesso público verificado.

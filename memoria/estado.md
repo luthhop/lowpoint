@@ -16,5 +16,5 @@
 - Landing completa aprovada e implementada em frontend/ (React/TypeScript/Vite); design/frontend-implementacao.md
 - Lucas aprovou A na abertura + B no desfecho; fluxo contínuo desktop/mobile no Paper; design/landing-fluxo-consolidado.md
 ## Retomada
-- Próximo: revisão da prévia local e decisão de publicação estática; webhook Vercel preservado
+- Landing publicada: https://lowpoint-web.vercel.app; projeto lowpoint-web, raiz frontend, GitHub conectado; webhook independente
 - Alterações paralelas no backend preservadas fora do commit frontend; remover “Fone Teste” (watch id=3) ainda pendente
