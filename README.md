@@ -37,7 +37,8 @@ O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 - Menor preço; em empate, prefere oferta com garantia e depois loja oficial
 - Coleta automática a cada hora (GitHub Actions)
 - Anti-spam: alerta do mesmo tipo só se preço cair abaixo do último enviado
-- 120 testes
+- Landing responsiva com design aprovado no Paper, animações, FAQ e fontes locais
+- 210 testes Python + 5 testes do frontend
 
 ## Roadmap
 
@@ -46,7 +47,8 @@ O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 - [x] Bot Telegram (`/adicionar`, `/lista`, `/remover`, `/apelido`, alertas com veredito)
 - [x] Webhook serverless na Vercel
 - [ ] Veredito em tempo real nos alertas refinado, bot rodando 24/7
-- [ ] Landing page + dashboard (design no Paper)
+- [x] Landing page responsiva (design no Paper, implementação local)
+- [ ] Publicação da landing + dashboard
 - [ ] Análise de dados: os descontos da Black Friday 2026 eram reais?
 
 ## Arquitetura
@@ -74,6 +76,20 @@ graph LR
 | Testes | pytest |
 | Design | Paper |
 | Tipos monetários | `NUMERIC(12,2)` no banco, `Decimal` no Python — nunca `float` |
+
+## Frontend — landing
+
+A landing está em [`frontend/`](frontend/), com React, TypeScript e Vite. Segue a identidade e o fluxo aprovados no Paper: investigação editorial → histórico do preço → desconto real → Telegram.
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Abra http://127.0.0.1:5173/. Para validar: `npm test` e `npm run build`. [Guia completo](frontend/README.md).
+
+O site é uma vitrine do projeto em teste pessoal; usa exemplos fictícios e não acessa o banco nem envia mensagens ao Telegram. O deploy do webhook permanece independente da publicação da landing.
 
 ## Rodando localmente
 

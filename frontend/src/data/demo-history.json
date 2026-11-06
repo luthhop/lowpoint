@@ -1,0 +1,20 @@
+{
+  "product": "PS5 Digital Edition",
+  "baselineCents": 345000,
+  "targetCents": 330000,
+  "crossedOutCents": 600000,
+  "illustrative": true,
+  "points": [
+    { "date": "2026-08-01", "priceCents": 345000, "position": 0 },
+    { "date": "2026-09-01", "priceCents": 346000, "position": 0.06 },
+    { "date": "2026-10-01", "priceCents": 344000, "position": 0.12 },
+    { "date": "2026-11-01", "priceCents": 345000, "position": 0.18 },
+    { "date": "2026-11-14", "priceCents": 345000, "position": 0.25 },
+    { "date": "2026-11-15", "priceCents": 600000, "position": 0.4 },
+    { "date": "2026-11-20", "priceCents": 598000, "position": 0.48 },
+    { "date": "2026-11-26", "priceCents": 600000, "position": 0.6 },
+    { "date": "2026-11-27", "priceCents": 360000, "position": 0.73 },
+    { "date": "2026-12-01", "priceCents": 360000, "position": 0.82 },
+    { "date": "2026-12-02", "priceCents": 320000, "position": 1 }
+  ]
+}

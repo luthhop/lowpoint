@@ -1,6 +1,6 @@
 # Landing — seções finais para revisão
 
-2026-11-05. Complemento do fluxo A + B aprovado por Lucas. “Como funciona”, vereditos, FAQ e CTA final desenhados no Paper em desktop e mobile. Aguardam aprovação visual e de conteúdo antes da implementação, conforme o fluxo do projeto.
+2026-11-05. Complemento do fluxo A + B aprovado por Lucas. “Como funciona”, vereditos, FAQ e CTA final aprovados por Lucas e implementados; ver [implementação do frontend](frontend-implementacao.md).
 
 [Paper](https://app.paper.design/file/01M6CVG8YNRACRX74D729QY706/p-6-0) · [Desktop completo](landing-fluxo-desktop.png) · [Mobile completo](landing-fluxo-mobile.png)
 
@@ -70,4 +70,4 @@ Navegação desktop inclui Como funciona, Os vereditos, Perguntas e GitHub. Roda
 
 Seções revisadas individualmente em desktop e mobile: hierarquia, espaçamento, contraste, alinhamento e encaixe. Sem cortes; alturas fit-content. Nenhuma alteração no backend, banco ou Telegram.
 
-Próximo: aprovação de Lucas para as novas seções e textos; então definir stack do frontend e implementar o design, verificando comportamento responsivo, movimento reduzido, navegação e FAQ no navegador. Os valores principais da história vêm dos testes; os gráficos do Paper permanecem esquemáticos.
+Implementação concluída em React/TypeScript/Vite, com navegação e FAQ verificados no navegador. Revisão da prévia e publicação são as próximas etapas. Os gráficos do Paper permanecem esquemáticos; o frontend usa seu fixture explícito, validado contra o veredito real.
