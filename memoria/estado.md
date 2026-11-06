@@ -8,7 +8,7 @@
 - baseline_price limpo nas contas; median_30d preservada; preço riscado não veta recuperação
 - 4% = neutro; ≥5% + menor histórico = real; nota explica inflação anterior
 - Neutro com alvo atingido não alega falta de histórico quando já há dados suficientes
-- 210 testes Python + 5 frontend passaram; build TypeScript/Vite passou; 4 avisos legados SQLAlchemy
+- 210 testes Python + 5 frontend passaram; build local e CI GitHub passaram; 4 avisos legados SQLAlchemy
 - Simulação sem rede/banco: scripts/preview_recovered_hike.py
 - Textos e critérios: memoria/design/validacao-pos-pico.md
 ## Design e landing

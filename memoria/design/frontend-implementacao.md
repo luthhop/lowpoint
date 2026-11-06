@@ -28,7 +28,7 @@ A landing não chama API de preços, banco ou Telegram. Comandos são exemplos. 
 - Navegador: revisados 320, 390, 768, 1024 e 1440 px. Sem overflow horizontal na versão final. Ajustados quebra do título, posição do carimbo, ordem das legendas mobile, largura do gráfico e tamanho dos marcadores.
 - Âncoras para história e alerta testadas; FAQ abre, fecha por Enter e mantém uma resposta aberta. Console sem erros observados.
 - Movimento reduzido: implementação revisada em CSS e hooks; a ferramenta de navegador disponível não oferece emulação dessa preferência, então não foi validado com emulação ativada.
-- `.github/workflows/frontend.yml`: valida testes Node, build e o fixture contra o motor Python; resultado remoto a verificar após push.
+- GitHub Actions passou: [execução 42149176633](https://github.com/luthhop/lowpoint/actions/runs/42149176633), commit a157898. Jobs build e story concluídos com sucesso (12s e 25s).
 
 ## Retomada
 
