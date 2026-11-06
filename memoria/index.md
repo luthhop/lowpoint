@@ -10,7 +10,10 @@
 - [Marca](produto/marca.md) — nome (Lowpoint), personalidade, tom de voz, direções visuais
 
 ## Design
+- [Validação pós-pico](design/validacao-pos-pico.md) — regra corrigida, simulação local e textos de 4%, 10%, 20%
 - [Brand board](design/brand-board.png) — board completo exportado do Paper
+- [Wireframe Landing](design/wireframe-landing.md) — wireframe v7 da landing, validado contra o código
+- [Referência Money Flow](design/referencia-money-flow.md) — análise visual da landing do Money Flow, guia a landing do Lowpoint
 - [Exploração A](design/exploracao-a-terminal.png) — direção Terminal (descartada)
 - [Exploração B](design/exploracao-b-signage.png) — direção Signage (base escolhida)
 - [Exploração C](design/exploracao-c-maritime.png) — direção Maritime (descartada)

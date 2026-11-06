@@ -1,6 +1,9 @@
+import math
 from dataclasses import dataclass
 from decimal import Decimal
 from html import escape
+
+from lowpoint.config import FACHADA_THRESHOLD, MIN_MONITORING_DAYS
 
 
 def fmt_brl(value: Decimal) -> str:
@@ -23,7 +26,7 @@ def item_url(item_id: str) -> str:
 def _pct(a: Decimal, b: Decimal) -> str:
     if b == 0:
         return "0%"
-    return f"{abs((a - b) / b) * 100:.0f}%"
+    return f"{math.floor(abs((a - b) / b) * 100)}%"
 
 
 @dataclass(frozen=True)
@@ -42,6 +45,9 @@ class AlertContext:
     has_warranty: bool
     is_official: bool
     suspect_count: int
+    hike_pct: Decimal | None = None
+    hike_days: int | None = None
+    baseline_price: Decimal | None = None
     cheapest_suspect_price: Decimal | None = None
     offer_count: int = 0
 
@@ -63,7 +69,7 @@ def _footer(ctx: AlertContext) -> str:
     if ctx.is_official:
         details.append("Loja oficial")
     else:
-        details.append("Vendedor não-oficial")
+        details.append("Vendedor não oficial")
     if ctx.has_warranty:
         details.append("Com garantia")
     parts.append("\n" + " · ".join(details))
@@ -82,8 +88,21 @@ def _footer(ctx: AlertContext) -> str:
 def _claimed_discount(ctx: AlertContext) -> str | None:
     if ctx.original_price and ctx.original_price > ctx.price:
         pct = _pct(ctx.price, ctx.original_price)
-        return f"O anúncio diz {pct} OFF (de {fmt_brl(ctx.original_price)})."
+        return f"Preço riscado: {fmt_brl(ctx.original_price)} (−{pct})."
     return None
+
+
+def _recovered_hike_note(ctx: AlertContext) -> list[str]:
+    if (
+        ctx.pre_hike_price is not None
+        and ctx.pre_hike_price > ctx.price
+        and ctx.hike_pct is not None
+    ):
+        discount = _pct(ctx.price, ctx.pre_hike_price)
+        return [
+            f"Inflaram antes, mas mesmo assim tá {discount} abaixo do preço normal."
+        ]
+    return []
 
 
 def format_alert(ctx: AlertContext) -> AlertMessage:
@@ -104,21 +123,27 @@ def format_alert(ctx: AlertContext) -> AlertMessage:
 
 def _format_target_hit_real(ctx: AlertContext) -> AlertMessage:
     name = escape(ctx.product_name)
+    normal = ctx.baseline_price or ctx.median_30d
     lines = [f"<b>✅ PODE IR</b> · {name} · <b>{fmt_brl(ctx.price)}</b>"]
     lines.append("")
     lines.append(
         f"Bateu teu alvo de {fmt_brl(ctx.target_price)}. "
         f"Esse é de verdade. Pode ir."
     )
-    if ctx.median_30d and ctx.median_30d > 0:
-        discount = _pct(ctx.price, ctx.median_30d)
+    if normal and normal > 0:
+        discount = _pct(ctx.price, normal)
+        if ctx.lowest_price is not None and ctx.price <= ctx.lowest_price:
+            period = "desde que começamos a monitorar"
+        else:
+            period = f"em {_dias(ctx.monitoring_days)}"
         lines.append(
-            f"Menor preço em {_dias(ctx.monitoring_days)}, "
+            f"Menor preço {period}, "
             f"{discount} abaixo do normal."
         )
+    lines.extend(_recovered_hike_note(ctx))
     lines.append("")
-    if ctx.median_30d:
-        lines.append(f"Preço normal: {fmt_brl(ctx.median_30d)}")
+    if normal:
+        lines.append(f"Preço normal: {fmt_brl(normal)}")
     if ctx.lowest_price and ctx.lowest_price != ctx.price:
         lines.append(f"Menor anterior: {fmt_brl(ctx.lowest_price)}")
     lines.append(_footer(ctx))
@@ -137,9 +162,18 @@ def _format_target_hit_neutro(ctx: AlertContext) -> AlertMessage:
     lines = [
         f"🎯 <b>{name}</b> bateu teu alvo: <b>{fmt_brl(ctx.price)}</b>.",
         "",
-        f"Ainda tô conhecendo esse produto (monitorando {since}), "
-        f"então não dá pra dizer se o desconto é de verdade. O alvo é teu.",
     ]
+    if ctx.monitoring_days < MIN_MONITORING_DAYS:
+        lines.append(
+            f"Ainda tô conhecendo esse produto (monitorando {since}), "
+            f"então não dá pra dizer se o desconto é de verdade. O alvo é teu."
+        )
+    else:
+        lines.append("O alvo foi atingido, mas ainda não reúne os critérios de desconto real.")
+        normal = ctx.baseline_price or ctx.median_30d
+        if normal:
+            lines.append(f"Preço normal: {fmt_brl(normal)}")
+    lines.extend(_recovered_hike_note(ctx))
     lines.append(_footer(ctx))
     return AlertMessage(
         text="\n".join(lines),
@@ -152,19 +186,21 @@ def _format_target_hit_neutro(ctx: AlertContext) -> AlertMessage:
 
 def _format_verdict_real(ctx: AlertContext) -> AlertMessage:
     name = escape(ctx.product_name)
+    normal = ctx.baseline_price or ctx.median_30d
     lines = [f"<b>✅ PODE IR</b> · {name} · <b>{fmt_brl(ctx.price)}</b>"]
     lines.append("")
-    if ctx.median_30d and ctx.median_30d > 0:
-        discount = _pct(ctx.price, ctx.median_30d)
+    if normal and normal > 0:
+        discount = _pct(ctx.price, normal)
         lines.append(
             f"Novo menor preço, {discount} abaixo do normal. "
             f"Esse é de verdade. Pode ir."
         )
     else:
         lines.append("Novo menor preço. Esse é de verdade. Pode ir.")
+    lines.extend(_recovered_hike_note(ctx))
     lines.append("")
-    if ctx.median_30d:
-        lines.append(f"Preço normal: {fmt_brl(ctx.median_30d)}")
+    if normal:
+        lines.append(f"Preço normal: {fmt_brl(normal)}")
     if ctx.lowest_price and ctx.lowest_price != ctx.price:
         lines.append(f"Menor anterior: {fmt_brl(ctx.lowest_price)}")
     lines.append(_footer(ctx))
@@ -184,16 +220,49 @@ def _format_maquiado(ctx: AlertContext) -> AlertMessage:
     claimed = _claimed_discount(ctx)
     if claimed:
         lines.append(claimed)
-    if ctx.median_30d:
-        lines.append(f"Preço normal no último mês: {fmt_brl(ctx.median_30d)}.")
-    if ctx.pre_hike_price and ctx.pre_hike_price < ctx.price:
-        increase = ((ctx.price - ctx.pre_hike_price) / ctx.pre_hike_price) * 100
-        lines.append(
-            f"Subiram pra baixar. Preço subiu {increase:.0f}% nas 2 semanas "
-            f'antes da "queda" (era {fmt_brl(ctx.pre_hike_price)}). Segura.'
-        )
+    if ctx.pre_hike_price and ctx.hike_pct is not None:
+        lines.append(f"Antes de subir, custava {fmt_brl(ctx.pre_hike_price)}.")
+        hike_str = f"{ctx.hike_pct * 100:.0f}%"
+        dias = ctx.hike_days if ctx.hike_days else 14
+        diff = ctx.price - ctx.pre_hike_price
+        prefix = f"Subiram {hike_str} há {dias} dias e baixaram de volta. "
+        if diff > 0:
+            lines.append(
+                prefix
+                + f"Tá {fmt_brl(diff)} mais caro que antes. Segura."
+            )
+        elif diff < 0:
+            pct_below_dec = abs(diff) / ctx.pre_hike_price
+            pct_below_str = f"{math.floor(pct_below_dec * 100)}%"
+            if pct_below_dec <= FACHADA_THRESHOLD:
+                lines.append(
+                    prefix
+                    + f"Tá só {pct_below_str} abaixo do que custava antes. "
+                    f"Desconto de fachada. Segura."
+                )
+            else:
+                lines.append(
+                    prefix
+                    + f"Tá {pct_below_str} abaixo do que custava antes, "
+                    f"mas inflaram antes de baixar. Segura."
+                )
+        else:
+            lines.append(
+                prefix
+                + "Voltou ao preço de antes. Desconto de fachada. Segura."
+            )
     else:
-        lines.append("Subiram pra baixar. Segura.")
+        normal = ctx.baseline_price or ctx.median_30d
+        if normal:
+            lines.append(f"Preço normal no último mês: {fmt_brl(normal)}.")
+        if ctx.pre_hike_price and ctx.pre_hike_price < ctx.price:
+            increase = ((ctx.price - ctx.pre_hike_price) / ctx.pre_hike_price) * 100
+            lines.append(
+                f"Subiram pra baixar. Preço subiu {increase:.0f}% nas 2 semanas "
+                f'antes da "queda" (era {fmt_brl(ctx.pre_hike_price)}). Segura.'
+            )
+        else:
+            lines.append("Subiram pra baixar. Segura.")
     lines.append(_footer(ctx))
     return AlertMessage(
         text="\n".join(lines),
@@ -215,8 +284,9 @@ def _format_target_hit_maquiado(ctx: AlertContext) -> AlertMessage:
     claimed = _claimed_discount(ctx)
     if claimed:
         lines.append(claimed)
-    if ctx.median_30d:
-        lines.append(f"Preço normal no último mês: {fmt_brl(ctx.median_30d)}.")
+    normal = ctx.baseline_price or ctx.median_30d
+    if normal:
+        lines.append(f"Preço normal no último mês: {fmt_brl(normal)}.")
     lines.append(_footer(ctx))
     return AlertMessage(
         text="\n".join(lines),
@@ -232,8 +302,10 @@ def _format_neutro(ctx: AlertContext) -> AlertMessage:
     lines = [f"<b>MONITORANDO</b> · {name} · <b>{fmt_brl(ctx.price)}</b>"]
     lines.append("")
     lines.append(f"Preço atual. {escape(ctx.reason)}")
-    if ctx.median_30d:
-        lines.append(f"Preço normal: {fmt_brl(ctx.median_30d)}")
+    lines.extend(_recovered_hike_note(ctx))
+    normal = ctx.baseline_price or ctx.median_30d
+    if normal:
+        lines.append(f"Preço normal: {fmt_brl(normal)}")
     lines.append(_footer(ctx))
     return AlertMessage(
         text="\n".join(lines),

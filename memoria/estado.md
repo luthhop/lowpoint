@@ -1,23 +1,20 @@
 # Estado do projeto
-## Sprint 1 — completa
-- Schema, coletor, veredito, best_offer, proteção anti-golpe, GitHub Actions (coleta horária)
-- Repositório público: https://github.com/luthhop/lowpoint
-- 2 produtos reais registrados (MLB24061510 monitor LG, MLB57081243 PS5)
-## Sprint 2 — completa
-- Bot Telegram funcionando: /adicionar /lista /remover /apelido
-- Alertas com veredito integrados no coletor (após cada coleta)
-- Webhook Vercel (api/webhook.py) deployado e respondendo
+## Sprints 1 e 2 — completas
+- Coletor ML catálogo, veredito, anti-golpe e coleta horária no GitHub Actions
+- GitHub: https://github.com/luthhop/lowpoint; 2 produtos reais (monitor LG e PS5)
+- Bot: /adicionar /lista /remover /apelido; alertas pelo coletor; webhook Vercel
 ## Sprint 3 — em andamento
-- Tudo de antes +
-- Fix: filtro anti-golpe com historical_median (< 3 ofertas usa mediana do histórico)
-- Coleta anômala: se ofertas caem a < 30% do normal, grava dados mas suprime alertas
-- Aviso "poucos vendedores" no footer quando < 3 ofertas
-- recalc_price_history.py atualizado com historical_median cronológico
-- 162 testes passando
-## Pendências
-- Remover alerta espúrio id=1 (R$ 1.500 do PS5, gerado em teste local)
-- Remover "Fone Teste" (watch id=3, já inativo)
-- Deploy do fix (push + redeploy Vercel)
-## Plano até Black Friday
-- Semana 3 (até 22/11): veredito refinado, bot 24/7
-- Pós-BF: telas no Paper, dashboard, landing page
+- Correção pós-pico concluída: desconto ≤3% = maquiado; >3% segue regra normal
+- baseline_price limpo nas contas; median_30d preservada; preço riscado não veta recuperação
+- 4% = neutro; ≥5% + menor histórico = real; nota explica inflação anterior
+- Neutro com alvo atingido não alega falta de histórico quando já há dados suficientes
+- 208 testes passaram (46 landing); 4 avisos legados SQLAlchemy no webhook
+- Simulação sem rede/banco: scripts/preview_recovered_hike.py
+- Textos e critérios: memoria/design/validacao-pos-pico.md
+## Design e landing
+- Branding completo no Paper; conexão Paper operacional no Codex
+- Wireframe v7: memoria/design/wireframe-landing.md (nota pós-pico atualizada)
+- Pendente: CTAs, hero subtitle, “Grátis”, “30 segundos”, FAQ conta → Paper → aprovação
+## Retomada
+- Lote validado: correções pós-pico + textos e documentação; push autorizado por Lucas
+- Remover “Fone Teste” (watch id=3) continua pendente; sem mudanças em produção nesta sessão

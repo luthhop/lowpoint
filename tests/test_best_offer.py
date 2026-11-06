@@ -135,13 +135,13 @@ class TestWarnings:
         offers = [_offer(1200, official_store_id=None)]
         result = select_best_offer(offers)
         assert result is not None
-        assert any("não-oficial" in w for w in result.warnings)
+        assert any("não oficial" in w for w in result.warnings)
 
     def test_sem_warning_vendedor_oficial(self):
         offers = [_offer(1200, official_store_id=1234)]
         result = select_best_offer(offers)
         assert result is not None
-        assert not any("não-oficial" in w for w in result.warnings)
+        assert not any("não oficial" in w for w in result.warnings)
 
 
 class TestDesempate:
@@ -406,5 +406,5 @@ class TestCasoRealPS5:
         result = select_best_offer(self._ps5_offers())
         assert result is not None
         texto = " ".join(result.warnings)
-        assert "não-oficial" in texto
+        assert "não oficial" in texto
         assert "suspeita" in texto

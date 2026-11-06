@@ -126,7 +126,7 @@ class TestVerdictMaquiadoSubiramPraBaixar:
             )
 
         result = compute_verdict(
-            current_price=Decimal("950"),
+            current_price=Decimal("980"),
             original_price=Decimal("1200"),
             history=history,
             now=now,

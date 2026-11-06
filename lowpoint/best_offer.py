@@ -57,7 +57,7 @@ def select_best_offer(
 
     warnings: list[str] = []
     if best.official_store_id is None:
-        warnings.append("oferta de vendedor não-oficial")
+        warnings.append("oferta de vendedor não oficial")
     if not _has_warranty(best.warranty):
         warnings.append("oferta sem garantia informada")
     if suspect_offers:

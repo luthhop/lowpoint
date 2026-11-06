@@ -201,8 +201,9 @@ class TestFormatAlertMaquiado:
             original_price=Decimal("6000.00"),
             median_30d=Decimal("3450.00"),
         ))
-        assert "40% OFF" in msg.text
+        assert "Preço riscado:" in msg.text
         assert "R$ 6.000,00" in msg.text
+        assert "40%" in msg.text
 
     def test_shows_pre_hike(self):
         msg = format_alert(_ctx(
@@ -381,7 +382,7 @@ class TestFooter:
 
     def test_vendedor_nao_oficial(self):
         msg = format_alert(_ctx(is_official=False))
-        assert "Vendedor não-oficial" in msg.text
+        assert "Vendedor não oficial" in msg.text
 
     def test_loja_oficial(self):
         msg = format_alert(_ctx(is_official=True))
@@ -482,12 +483,12 @@ class TestDias:
 
 class TestPluralInAlerts:
     def test_1_dia_no_dias(self):
-        msg = format_alert(_ctx(monitoring_days=1))
+        msg = format_alert(_ctx(monitoring_days=1, lowest_price=Decimal("3100.00")))
         assert "1 dia" in msg.text
         assert "1 dias" not in msg.text
 
     def test_many_dias(self):
-        msg = format_alert(_ctx(monitoring_days=47))
+        msg = format_alert(_ctx(monitoring_days=47, lowest_price=Decimal("3100.00")))
         assert "47 dias" in msg.text
 
 

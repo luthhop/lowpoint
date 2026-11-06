@@ -1,5 +1,5 @@
 # Decisões
-- Stack de IA: só Claude Code + Paper + Obsidian (sem Codex)
+- Stack de IA: Claude Code + Paper + Obsidian; Codex autorizado como apoio em 2026-11-05 durante os limites de uso do Claude. Ambos consultam o mesmo vault memoria/.
 - MVP: bot Telegram pessoal, só Mercado Livre. Comandos /adicionar /lista /remover, alerta de preço-alvo, histórico de preços
 - Stack MVP: Python + python-telegram-bot + PostgreSQL (Neon cloud) + SQLAlchemy 2 + Alembic
 - Banco: Neon (cloud) para produção e coleta contínua. Docker Compose mantido como opção para dev local. DATABASE_URL no .env com SSL obrigatório
@@ -46,3 +46,13 @@
 - Filtro anti-golpe com fallback: quando coleta traz < 3 ofertas, usa mediana histórica (price_history) para detectar suspeitas. Sem histórico E < 3 ofertas = sem filtro (produto novo)
 - Coleta anômala: se ofertas < 30% da mediana das últimas 10 coletas, dados gravados mas alertas suprimidos. Mínimo 3 coletas anteriores para ativar detecção
 - Footer com aviso "poucos vendedores" quando < 3 ofertas na coleta (qualquer tipo de alerta)
+- Feed geral de promoções: fora do MVP e da Fase 2. ML /search retorna 403; Amazon depende de vendas como afiliado. Sem fonte viável agora
+- Amazon Creators API: Fase 2 como segundo PriceSource. Links de afiliado nos botões "Ver oferta" (comissão nunca influencia o veredito). Requer conta Amazon Associates com vendas ativas
+- Login do dashboard: Telegram OIDC (OAuth 2.0 Authorization Code + PKCE). ID token com claim `sub` = user ID do Telegram. Scope `telegram:bot_access` permite bot enviar DMs após login. Widget legado com hash existe mas OIDC é o padrão atual
+- Fix _detect_hike (2026-11-05, consolidado): pico detectado usa preço pré-pico como baseline limpo, preservando median_30d real. Desconto >3% segue as regras normais: ≥5% e menor histórico = real; caso contrário neutro. Formatter mostra markup do pico (ex: 74%) no SEGURA.
+- "Menor preço desde que começamos a monitorar" (2026-11-05): substitui "menor preço em N dias" quando N = total do histórico. Motivo: N arbitrário confunde; "desde que começamos" é mais honesto
+- "Preço riscado" em vez de "O anúncio diz X% OFF" (2026-11-05): mostra o preço riscado original + % calculado com floor(). Motivo: "o anúncio diz" pressupõe que a % vem do anúncio, mas calculamos nós mesmos. Floor evita arredondar pra cima e parecer mais desconto do que é
+- "há N dias" em vez de "em N dias" (2026-11-05): hike_days conta do primeiro ponto elevado até hoje, não até o pico. "há" é mais preciso
+- baseline_price separado de median_30d (2026-11-05): median_30d = mediana real dos 30 dias (pode estar contaminada pelo hike). baseline_price = pre_hike_price quando hike detectado, median_30d caso contrário. Formatter usa baseline_price para "preço normal"
+- FACHADA_THRESHOLD = 3% (2026-11-05, corrigido): desconto ≤3% do pré-pico continua maquiado; >3% sai do SEGURA e segue a lógica normal sobre baseline_price. Preço riscado inflado não veta essa recuperação; sem pico, a regra de original inflado permanece. Nota: "Inflaram antes, mas mesmo assim tá X% abaixo do preço normal."
+- Validação pós-pico (2026-11-05): 4% = neutro (alerta só com alvo atingido), 10% e 20% = real se menor histórico. Simulação local reproduzível e textos em design/validacao-pos-pico.md; nenhuma mensagem real ou gravação em produção.
