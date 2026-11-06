@@ -25,6 +25,6 @@ O fluxo estático foi consolidado após aprovação da combinação; seus novos 
 
 ## Próxima etapa
 
-- Completar seções de funcionamento, vereditos e FAQ, usando a narrativa consolidada como base e respeitando o estado real do produto.
+- Seções de funcionamento, vereditos, FAQ e CTA final desenhadas em desktop/mobile; conteúdo e exports em [seções finais](landing-secoes-finais.md). Aguardam aprovação de Lucas.
 - Fechar acesso público vs. vitrine pessoal e CTA de conversão; não prometer acesso aberto ao bot, “grátis” permanente ou cadastro em 30 segundos.
 - Aprovar as seções restantes antes da implementação. Depois, definir stack e validar rolagem, mobile e movimento reduzido no navegador.

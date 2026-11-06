@@ -13,7 +13,7 @@
 - Textos e critérios: memoria/design/validacao-pos-pico.md
 ## Design e landing
 - Branding completo no Paper; conexão Paper operacional no Codex
-- Wireframe v7: memoria/design/wireframe-landing.md (nota pós-pico atualizada)
+- Landing completa no Paper: funcionamento, vereditos, FAQ e CTA final; design/landing-secoes-finais.md; aguardam aprovação de Lucas
 - Lucas aprovou A na abertura + B no desfecho; fluxo contínuo desktop/mobile no Paper; design/landing-fluxo-consolidado.md
 ## Retomada
 - Lote validado: correções pós-pico + textos e documentação; push autorizado por Lucas

@@ -10,6 +10,7 @@
 - [Marca](produto/marca.md) — nome (Lowpoint), personalidade, tom de voz, direções visuais
 
 ## Design
+- [Landing — seções finais](design/landing-secoes-finais.md) — funcionamento, vereditos, FAQ e CTA desenhados para aprovação
 - [Landing — fluxo A + B](design/landing-fluxo-consolidado.md) — combinação aprovada, sequência contínua desktop/mobile e pendências
 - [Landing — direções A e B](design/landing-direcoes-a-b.md) — alternativas de hero desktop/mobile, movimento proposto e revisão
 - [Landing Investigação v1](design/landing-investigacao-v1.md) — primeiras pranchas desktop/mobile no Paper, exports e coreografia proposta
