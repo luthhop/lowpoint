@@ -67,3 +67,5 @@
 - Aviso de coleta atrasada: última coleta = max(offer_snapshots.collected_at), que só o coletor grava. >90 min → Telegram para o 1º ALLOWED_CHAT_IDS, no máximo 1 por hora (marcador em system_state).
 - Chamadas ao ML: timeout (5s, 15s), até 3 tentativas com backoff 1s/2s em 429, 5xx e falha de rede; Retry-After respeitado até 10s.
 - Textos (2026-11-10): nota pós-pico "Subiram antes, mas mesmo assim tá X% abaixo do preço normal" (casa com template C); MONITORANDO mostra o motivo como frase própria, sem "Preço atual.".
+- Cron externo do tick (2026-11-10, Lucas): de hora em hora fora da BF e a cada 15 min de 23 a 27/11, para poupar compute do Neon (cada batida acorda o banco). Cron de reserva do GitHub na BF alinhado: dias 23-27.
+- Textos (2026-11-10): alvo + neutro pós-pico = "Bateu, mas não é desconto de verdade: subiram antes e agora tá só X% abaixo do normal. A decisão é tua." (sem pico: "...pelos critérios do Lowpoint."). PODE IR com pico junta numa linha: "Mesmo depois de subirem antes, tá X% abaixo do normal"; sem pico mantém a linha original.

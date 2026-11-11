@@ -7,10 +7,10 @@
 - Pós-pico: ≤3% SEGURA (template C), 3–5% MONITORANDO, ≥5% + menor histórico = PODE IR
 - Backtest real 10/11: 81 vereditos, 0 mudanças, 0 picos (histórico <14d não exercita o fix)
 - PROBLEMA agendador: cron GitHub de hora em hora disparou só 3–5x/dia (intervalo mediano 7h, 03–10/11)
-- Solução local (sem push): /api/tick na Vercel dispara workflow_dispatch + aviso Telegram se coleta >90 min
-- Pendente Lucas: token fine-grained, env vars na Vercel, cron externo 15 min, `alembic upgrade head` (system_state)
+- /api/tick no main (10/11): dispara workflow_dispatch + aviso Telegram se coleta >90 min
+- system_state aplicada no Neon (alembic e3f4a5b6c7d8). Pendente Lucas: token, env vars Vercel, cron externo
 - Coleta: timeout (5s,15s), retry 429/5xx/rede (3 tentativas), log de chamadas por execução
-- 247 testes Python + 5 frontend (10/11)
+- 250 testes Python + 5 frontend (10/11); landing App.tsx ainda com linha antiga do PODE IR
 ## Design e landing
 - Landing publicada: https://lowpoint-web.vercel.app; projeto lowpoint-web, raiz frontend
 - Lucas quer animações com mais impacto — ritmo etiqueta → histórico → SEGURA → desconto real → alerta

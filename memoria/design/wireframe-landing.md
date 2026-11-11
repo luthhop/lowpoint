@@ -1,7 +1,8 @@
-# Wireframe — Landing Page Lowpoint (v8)
+# Wireframe — Landing Page Lowpoint (v9)
 
 > Validado contra o código corrigido em `lowpoint/verdict.py` e `lowpoint/telegram/formatter.py`.
-> Teste: `tests/test_landing_story.py` — 47 passed, 0 failed (total: 211).
+> Teste: `tests/test_landing_story.py` — 53 passed, 0 failed (total: 250).
+> Mudanças v9 (2026-11-10): PODE IR com pico junta os 7% numa linha só ("Mesmo depois de subirem antes, tá X% abaixo do normal"). Pendente: o trecho do PODE IR em `frontend/src/App.tsx` ainda usa a linha antiga.
 > Mudanças v8 (2026-11-10): SEGURA com pico usa template C — "O anúncio diz X% OFF (de R$ …)" e "Subiram X% em N dias", N contado do início do pico. Texto conferido por teste de igualdade exata.
 > Mudanças v7: recuperação >3% segue regra normal sobre baseline limpo; nota pós-pico no alerta. Validação: [cenários 4%, 10%, 20%](validacao-pos-pico.md).
 > Mudanças v6: "Preço riscado" em vez de "O anúncio diz", "há N dias" (não "em"), floor() no %, baseline_price separado de median_30d, FACHADA_THRESHOLD=3%.
@@ -48,8 +49,7 @@ Botão: "Ver oferta"
 ✅ PODE IR · PS5 Digital Edition · R$ 3.200,00
 
 Bateu teu alvo de R$ 3.300,00. Esse é de verdade. Pode ir.
-Menor preço desde que começamos a monitorar, 7% abaixo do normal.
-Subiram antes, mas mesmo assim tá 7% abaixo do preço normal.
+Menor preço desde que começamos a monitorar. Mesmo depois de subirem antes, tá 7% abaixo do normal.
 
 Preço normal: R$ 3.450,00
 Menor anterior: R$ 3.450,00
