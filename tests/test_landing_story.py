@@ -472,20 +472,66 @@ class TestSeguraTemplateC:
         assert v.verdict == "neutro"
         assert msg.alert_type == "target_hit"
         assert "SEGURA" not in text and "PODE IR" not in text
-        assert text.count("abaixo do preço normal") == 1
+        assert "alvo atingido" not in text and "O alvo foi" not in text
         assert text == (
             "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.312,00.\n\n"
-            "O alvo foi atingido, mas ainda não reúne os critérios de desconto real.\n"
-            "Preço normal: R$ 3.450,00\n"
-            "Subiram antes, mas mesmo assim tá 4% abaixo do preço normal."
+            "Bateu, mas não é desconto de verdade: subiram antes e agora "
+            "tá só 4% abaixo do normal. A decisão é tua.\n"
+            "Preço normal: R$ 3.450,00"
             + self.FOOTER
         )
 
-    def test_recovered_note_once_in_pode_ir(self):
-        """PODE IR pós-pico (7% abaixo): a nota de recuperação sai uma vez só."""
+    def test_target_hit_neutro_without_hike(self):
+        """Sem pico: corpo genérico, sem menção a subida."""
+        ctx = AlertContext(
+            product_name=PRODUCT_NAME, item_id=ITEM_ID, price=Decimal("3400.00"),
+            original_price=None, target_price=Decimal("3450.00"),
+            verdict="neutro", reason="preço dentro da faixa normal (30 dias de dados)",
+            lowest_price=Decimal("3350.00"), median_30d=Decimal("3450.00"),
+            monitoring_days=30, pre_hike_price=None, has_warranty=True,
+            is_official=False, suspect_count=0, baseline_price=Decimal("3450.00"),
+        )
+        text = format_alert(ctx).text.replace("<b>", "").replace("</b>", "")
+        assert text == (
+            "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.400,00.\n\n"
+            "Bateu, mas ainda não é desconto de verdade pelos critérios do "
+            "Lowpoint. A decisão é tua.\n"
+            "Preço normal: R$ 3.450,00"
+            + self.FOOTER
+        )
+
+    def test_pode_ir_with_hike_has_single_7pct_line(self):
+        """PODE IR pós-pico com alvo: os 7% aparecem uma vez, numa linha só."""
         v, msg, text = self._render_any(Decimal("3208.50"), TARGET)  # 3.450 × 0,93
         assert v.verdict == "real"
-        assert text.count("Subiram antes, mas mesmo assim") == 1
+        assert msg.alert_type == "target_hit"
+        assert text.count("7%") == 1
+        assert (
+            "Menor preço desde que começamos a monitorar. "
+            "Mesmo depois de subirem antes, tá 7% abaixo do normal.\n"
+        ) in text
+
+    def test_pode_ir_without_hike_keeps_original_line(self):
+        ctx = AlertContext(
+            product_name=PRODUCT_NAME, item_id=ITEM_ID, price=Decimal("3200.00"),
+            original_price=None, target_price=TARGET, verdict="real",
+            reason="desconto real", lowest_price=Decimal("3200.00"),
+            median_30d=Decimal("3450.00"), monitoring_days=30,
+            pre_hike_price=None, has_warranty=True, is_official=True,
+            suspect_count=0, baseline_price=Decimal("3450.00"),
+        )
+        text = format_alert(ctx).text
+        assert "Menor preço desde que começamos a monitorar, 7% abaixo do normal.\n" in text
+        assert "subirem" not in text and "Subiram" not in text
+
+    def test_verdict_real_with_hike_has_single_line(self):
+        """PODE IR pós-pico sem alvo atingido (verdict_real): mesma junção."""
+        v, msg, text = self._render_any(Decimal("3208.50"), Decimal("3000.00"))
+        assert msg.alert_type == "verdict_real"
+        assert text.count("7%") == 1
+        assert (
+            "Novo menor preço. Mesmo depois de subirem antes, tá 7% abaixo do normal."
+        ) in text
 
     def test_hike_days_follows_hike_start(self):
         """{dias} acompanha o início do pico, não a janela fixa de 14 dias."""
@@ -603,7 +649,15 @@ class TestRecoveredHike:
             return
         assert "SEGURA" not in msg.text
         assert "Segura" not in msg.text
-        assert "Subiram antes, mas mesmo assim tá" in msg.text
+        post_hike = {
+            "neutro": "Subiram antes, mas mesmo assim tá",
+            "target_hit_neutro": "subiram antes e agora tá só",
+            "real": "Mesmo depois de subirem antes, tá",
+        }
+        key = expected
+        if expected == "neutro" and price <= target:
+            key = "target_hit_neutro"
+        assert msg.text.count(post_hike[key]) == 1
         assert "Preço normal: R$ 3.450,00" in msg.text
         assert "Ainda tô conhecendo" not in msg.text
         if expected == "real":

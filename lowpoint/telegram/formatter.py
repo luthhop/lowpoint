@@ -107,12 +107,16 @@ def _announced_discount(ctx: AlertContext) -> str | None:
     return None
 
 
-def _recovered_hike_note(ctx: AlertContext) -> list[str]:
-    if (
+def _is_recovered_hike(ctx: AlertContext) -> bool:
+    return (
         ctx.pre_hike_price is not None
         and ctx.pre_hike_price > ctx.price
         and ctx.hike_pct is not None
-    ):
+    )
+
+
+def _recovered_hike_note(ctx: AlertContext) -> list[str]:
+    if _is_recovered_hike(ctx):
         discount = _pct(ctx.price, ctx.pre_hike_price)
         return [
             f"Subiram antes, mas mesmo assim tá {discount} abaixo do preço normal."
@@ -151,11 +155,13 @@ def _format_target_hit_real(ctx: AlertContext) -> AlertMessage:
             period = "desde que começamos a monitorar"
         else:
             period = f"em {_dias(ctx.monitoring_days)}"
-        lines.append(
-            f"Menor preço {period}, "
-            f"{discount} abaixo do normal."
-        )
-    lines.extend(_recovered_hike_note(ctx))
+        if _is_recovered_hike(ctx):
+            lines.append(
+                f"Menor preço {period}. "
+                f"Mesmo depois de subirem antes, tá {discount} abaixo do normal."
+            )
+        else:
+            lines.append(f"Menor preço {period}, {discount} abaixo do normal.")
     lines.append("")
     if normal:
         lines.append(f"Preço normal: {fmt_brl(normal)}")
@@ -184,11 +190,20 @@ def _format_target_hit_neutro(ctx: AlertContext) -> AlertMessage:
             f"então não dá pra dizer se o desconto é de verdade. O alvo é teu."
         )
     else:
-        lines.append("O alvo foi atingido, mas ainda não reúne os critérios de desconto real.")
+        if _is_recovered_hike(ctx):
+            discount = _pct(ctx.price, ctx.pre_hike_price)
+            lines.append(
+                f"Bateu, mas não é desconto de verdade: subiram antes e agora "
+                f"tá só {discount} abaixo do normal. A decisão é tua."
+            )
+        else:
+            lines.append(
+                "Bateu, mas ainda não é desconto de verdade pelos critérios "
+                "do Lowpoint. A decisão é tua."
+            )
         normal = ctx.baseline_price or ctx.median_30d
         if normal:
             lines.append(f"Preço normal: {fmt_brl(normal)}")
-    lines.extend(_recovered_hike_note(ctx))
     lines.append(_footer(ctx))
     return AlertMessage(
         text="\n".join(lines),
@@ -206,13 +221,18 @@ def _format_verdict_real(ctx: AlertContext) -> AlertMessage:
     lines.append("")
     if normal and normal > 0:
         discount = _pct(ctx.price, normal)
-        lines.append(
-            f"Novo menor preço, {discount} abaixo do normal. "
-            f"Esse é de verdade. Pode ir."
-        )
+        if _is_recovered_hike(ctx):
+            lines.append(
+                f"Novo menor preço. Mesmo depois de subirem antes, "
+                f"tá {discount} abaixo do normal. Esse é de verdade. Pode ir."
+            )
+        else:
+            lines.append(
+                f"Novo menor preço, {discount} abaixo do normal. "
+                f"Esse é de verdade. Pode ir."
+            )
     else:
         lines.append("Novo menor preço. Esse é de verdade. Pode ir.")
-    lines.extend(_recovered_hike_note(ctx))
     lines.append("")
     if normal:
         lines.append(f"Preço normal: {fmt_brl(normal)}")
