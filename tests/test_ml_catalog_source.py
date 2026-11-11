@@ -125,3 +125,72 @@ class TestMLCatalogSourceParsing:
 
         assert result.offers == []
         assert result.title == ""
+
+
+class TestRequestResilience:
+    """[TESTE] Timeout e retry sem rede: requests.request é falso."""
+
+    def _resp(self, status, headers=None):
+        r = MagicMock()
+        r.status_code = status
+        r.headers = headers or {}
+        r.json.return_value = {"ok": True}
+        r.raise_for_status.side_effect = None if status < 400 else Exception(status)
+        return r
+
+    def _source(self):
+        sleeps = []
+        source = MLCatalogSource(session_factory=MagicMock(), sleep=sleeps.append)
+        source._access_token = "tok"
+        return source, sleeps
+
+    def test_timeout_is_always_passed(self):
+        source, _ = self._source()
+        with patch("lowpoint.sources.ml_catalog.requests.request",
+                   return_value=self._resp(200)) as req:
+            source._get("https://x/y")
+        assert req.call_args.kwargs["timeout"] == (5, 15)
+
+    def test_retries_429_then_succeeds_with_backoff(self):
+        source, sleeps = self._source()
+        seq = [self._resp(429), self._resp(503), self._resp(200)]
+        with patch("lowpoint.sources.ml_catalog.requests.request", side_effect=seq):
+            assert source._get("https://x/y") == {"ok": True}
+        assert sleeps == [1.0, 2.0]
+        assert source.call_count == 3
+
+    def test_gives_up_after_3_attempts(self):
+        source, sleeps = self._source()
+        with patch("lowpoint.sources.ml_catalog.requests.request",
+                   return_value=self._resp(500)) as req:
+            try:
+                source._get("https://x/y")
+                raise AssertionError("devia falhar")
+            except Exception as e:
+                assert e.args == (500,)
+        assert req.call_count == 3 and len(sleeps) == 2
+
+    def test_4xx_is_not_retried(self):
+        source, sleeps = self._source()
+        with patch("lowpoint.sources.ml_catalog.requests.request",
+                   return_value=self._resp(404)) as req:
+            try:
+                source._get("https://x/y")
+            except Exception:
+                pass
+        assert req.call_count == 1 and sleeps == []
+
+    def test_retry_after_is_capped(self):
+        source, sleeps = self._source()
+        seq = [self._resp(429, {"Retry-After": "120"}), self._resp(200)]
+        with patch("lowpoint.sources.ml_catalog.requests.request", side_effect=seq):
+            source._get("https://x/y")
+        assert sleeps == [10.0]
+
+    def test_network_timeout_is_retried(self):
+        import requests as rq
+        source, sleeps = self._source()
+        seq = [rq.Timeout(), self._resp(200)]
+        with patch("lowpoint.sources.ml_catalog.requests.request", side_effect=seq):
+            assert source._get("https://x/y") == {"ok": True}
+        assert sleeps == [1.0]

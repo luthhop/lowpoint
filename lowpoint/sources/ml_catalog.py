@@ -1,4 +1,6 @@
+import logging
 import os
+import time
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -10,15 +12,53 @@ from lowpoint.sources.base import CatalogSnapshot, OfferData, PriceSource
 load_dotenv()
 
 _API_BASE = "https://api.mercadolibre.com"
+# (connect, read) em segundos. Sem timeout, uma chamada travada segura o job.
+REQUEST_TIMEOUT = (5, 15)
+MAX_ATTEMPTS = 3
+BACKOFF_BASE_SECONDS = 1.0
+MAX_RETRY_AFTER_SECONDS = 10.0
+
+log = logging.getLogger("lowpoint.ml_catalog")
+
+
+def _is_retryable(status_code: int) -> bool:
+    return status_code == 429 or 500 <= status_code < 600
 
 
 class MLCatalogSource(PriceSource):
-    def __init__(self, session_factory=None):
+    def __init__(self, session_factory=None, sleep=time.sleep):
         if session_factory is None:
             from lowpoint.db import SessionLocal
             session_factory = SessionLocal
         self._session_factory = session_factory
         self._access_token: str | None = None
+        self._sleep = sleep
+        self.call_count = 0
+
+    def _request(self, method: str, url: str, **kwargs) -> requests.Response:
+        """HTTP com timeout e até MAX_ATTEMPTS tentativas em 429/5xx/rede."""
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            self.call_count += 1
+            try:
+                resp = requests.request(method, url, timeout=REQUEST_TIMEOUT, **kwargs)
+            except (requests.Timeout, requests.ConnectionError):
+                if attempt == MAX_ATTEMPTS:
+                    raise
+                delay = BACKOFF_BASE_SECONDS * 2 ** (attempt - 1)
+                log.warning("Falha de rede (tentativa %d/%d), nova tentativa em %.0fs",
+                            attempt, MAX_ATTEMPTS, delay)
+                self._sleep(delay)
+                continue
+            if not _is_retryable(resp.status_code) or attempt == MAX_ATTEMPTS:
+                return resp
+            delay = BACKOFF_BASE_SECONDS * 2 ** (attempt - 1)
+            retry_after = resp.headers.get("Retry-After", "")
+            if retry_after.isdigit():
+                delay = min(max(delay, float(retry_after)), MAX_RETRY_AFTER_SECONDS)
+            log.warning("HTTP %d (tentativa %d/%d), nova tentativa em %.0fs",
+                        resp.status_code, attempt, MAX_ATTEMPTS, delay)
+            self._sleep(delay)
+        raise AssertionError("unreachable")
 
     def _load_token(self) -> str:
         if self._access_token:
@@ -47,7 +87,8 @@ class MLCatalogSource(PriceSource):
             if not row:
                 raise RuntimeError("Token ML não encontrado no banco.")
 
-            resp = requests.post(
+            resp = self._request(
+                "POST",
                 f"{_API_BASE}/oauth/token",
                 json={
                     "grant_type": "refresh_token",
@@ -79,11 +120,11 @@ class MLCatalogSource(PriceSource):
 
     def _get(self, url: str) -> dict:
         token = self._load_token()
-        resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+        resp = self._request("GET", url, headers={"Authorization": f"Bearer {token}"})
         if resp.status_code == 401:
             self._access_token = None
             token = self._refresh_token()
-            resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+            resp = self._request("GET", url, headers={"Authorization": f"Bearer {token}"})
         resp.raise_for_status()
         return resp.json()
 

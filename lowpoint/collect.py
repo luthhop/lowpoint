@@ -48,6 +48,8 @@ def collect_once(source: PriceSource) -> None:
             return
 
         log.info("Coletando %d produto(s)...", len(products))
+        if hasattr(source, "call_count"):
+            source.call_count = 0
 
         for product in products:
             try:
@@ -55,6 +57,13 @@ def collect_once(source: PriceSource) -> None:
             except Exception:
                 log.exception("Erro ao coletar %s", product.catalog_product_id)
                 session.rollback()
+
+        calls = getattr(source, "call_count", None)
+        if calls is not None:
+            log.info(
+                "Chamadas HTTP ao ML nesta execução: %d (%d produto(s)).",
+                calls, len(products),
+            )
 
     finally:
         session.close()
