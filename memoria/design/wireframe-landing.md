@@ -49,7 +49,7 @@ Botão: "Ver oferta"
 
 Bateu teu alvo de R$ 3.300,00. Esse é de verdade. Pode ir.
 Menor preço desde que começamos a monitorar, 7% abaixo do normal.
-Inflaram antes, mas mesmo assim tá 7% abaixo do preço normal.
+Subiram antes, mas mesmo assim tá 7% abaixo do preço normal.
 
 Preço normal: R$ 3.450,00
 Menor anterior: R$ 3.450,00

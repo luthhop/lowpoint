@@ -21,7 +21,7 @@ Regressões: 46 casos em `tests/test_landing_story.py`, incluindo 2,99%, 3%, 3,0
 
 O alvo foi atingido, mas ainda não reúne os critérios de desconto real.
 Preço normal: R$ 3.450,00
-Inflaram antes, mas mesmo assim tá 4% abaixo do preço normal.
+Subiram antes, mas mesmo assim tá 4% abaixo do preço normal.
 
 Loja oficial · Com garantia
 
@@ -30,7 +30,7 @@ Loja oficial · Com garantia
 
 Bateu teu alvo de R$ 3.500,00. Esse é de verdade. Pode ir.
 Menor preço desde que começamos a monitorar, 10% abaixo do normal.
-Inflaram antes, mas mesmo assim tá 10% abaixo do preço normal.
+Subiram antes, mas mesmo assim tá 10% abaixo do preço normal.
 
 Preço normal: R$ 3.450,00
 
@@ -41,7 +41,7 @@ Loja oficial · Com garantia
 
 Bateu teu alvo de R$ 3.500,00. Esse é de verdade. Pode ir.
 Menor preço desde que começamos a monitorar, 20% abaixo do normal.
-Inflaram antes, mas mesmo assim tá 20% abaixo do preço normal.
+Subiram antes, mas mesmo assim tá 20% abaixo do preço normal.
 
 Preço normal: R$ 3.450,00
 
