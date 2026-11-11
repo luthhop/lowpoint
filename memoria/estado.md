@@ -10,7 +10,7 @@
 - /api/tick no main (10/11): dispara workflow_dispatch + aviso Telegram se coleta >90 min
 - system_state aplicada no Neon (alembic e3f4a5b6c7d8). Pendente Lucas: token, env vars Vercel, cron externo
 - Coleta: timeout (5s,15s), retry 429/5xx/rede (3 tentativas), log de chamadas por execução
-- 250 testes Python + 5 frontend (10/11); landing App.tsx ainda com linha antiga do PODE IR
+- 446 testes Python + 5 frontend (10/11); landing App.tsx ainda com linha antiga do PODE IR
 ## Design e landing
 - Landing publicada: https://lowpoint-web.vercel.app; projeto lowpoint-web, raiz frontend
 - Lucas quer animações com mais impacto — ritmo etiqueta → histórico → SEGURA → desconto real → alerta
