@@ -481,25 +481,6 @@ class TestSeguraTemplateC:
             + self.FOOTER
         )
 
-    def test_target_hit_neutro_without_hike(self):
-        """Sem pico: corpo genérico, sem menção a subida."""
-        ctx = AlertContext(
-            product_name=PRODUCT_NAME, item_id=ITEM_ID, price=Decimal("3400.00"),
-            original_price=None, target_price=Decimal("3450.00"),
-            verdict="neutro", reason="preço dentro da faixa normal (30 dias de dados)",
-            lowest_price=Decimal("3350.00"), median_30d=Decimal("3450.00"),
-            monitoring_days=30, pre_hike_price=None, has_warranty=True,
-            is_official=False, suspect_count=0, baseline_price=Decimal("3450.00"),
-        )
-        text = format_alert(ctx).text.replace("<b>", "").replace("</b>", "")
-        assert text == (
-            "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.400,00.\n\n"
-            "Bateu, mas ainda não é desconto de verdade pelos critérios do "
-            "Lowpoint. A decisão é tua.\n"
-            "Preço normal: R$ 3.450,00"
-            + self.FOOTER
-        )
-
     def test_pode_ir_with_hike_has_single_7pct_line(self):
         """PODE IR pós-pico com alvo: os 7% aparecem uma vez, numa linha só."""
         v, msg, text = self._render_any(Decimal("3208.50"), TARGET)  # 3.450 × 0,93

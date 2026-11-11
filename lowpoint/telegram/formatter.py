@@ -3,7 +3,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 from html import escape
 
-from lowpoint.config import FACHADA_THRESHOLD, MIN_MONITORING_DAYS
+from lowpoint.config import (
+    FACHADA_THRESHOLD,
+    MIN_MONITORING_DAYS,
+    REAL_DISCOUNT_THRESHOLD,
+)
 
 
 def fmt_brl(value: Decimal) -> str:
@@ -177,31 +181,53 @@ def _format_target_hit_real(ctx: AlertContext) -> AlertMessage:
     )
 
 
+def _target_hit_neutro_reason(ctx: AlertContext, normal: Decimal | None) -> str:
+    """Por que um alvo atingido ainda é neutro, com números (≥7 dias de histórico)."""
+    if _is_recovered_hike(ctx):
+        discount = _pct(ctx.price, ctx.pre_hike_price)
+        return (
+            f"Bateu, mas não é desconto de verdade: subiram antes e agora "
+            f"tá só {discount} abaixo do normal. A decisão é tua."
+        )
+    pct_below = (normal - ctx.price) / normal if normal and normal > 0 else Decimal(0)
+    pct_str = f"{math.floor(pct_below * 100)}%"
+    if math.floor(pct_below * 100) < 1:
+        return (
+            "Bateu teu alvo, mas esse é o preço normal dele. "
+            "Não é promoção. A decisão é tua."
+        )
+    if (
+        pct_below >= REAL_DISCOUNT_THRESHOLD
+        and ctx.lowest_price is not None
+        and ctx.lowest_price < ctx.price
+    ):
+        return (
+            f"Bateu e tá {pct_str} abaixo do normal, mas já esteve mais barato: "
+            f"{fmt_brl(ctx.lowest_price)}. A decisão é tua."
+        )
+    return (
+        f"Bateu, mas tá só {pct_str} abaixo do normal. "
+        f"Ainda não é desconto de verdade. A decisão é tua."
+    )
+
+
 def _format_target_hit_neutro(ctx: AlertContext) -> AlertMessage:
     name = escape(ctx.product_name)
-    since = "desde hoje" if ctx.monitoring_days == 0 else f"há {_dias(ctx.monitoring_days)}"
     lines = [
         f"🎯 <b>{name}</b> bateu teu alvo: <b>{fmt_brl(ctx.price)}</b>.",
         "",
     ]
     if ctx.monitoring_days < MIN_MONITORING_DAYS:
+        juntando = (
+            "menos de 1 dia" if ctx.monitoring_days == 0 else _dias(ctx.monitoring_days)
+        )
         lines.append(
-            f"Ainda tô conhecendo esse produto (monitorando {since}), "
-            f"então não dá pra dizer se o desconto é de verdade. O alvo é teu."
+            f"Bateu, mas ainda tô juntando histórico ({juntando}). "
+            f"Não dá pra dizer se é desconto de verdade. A decisão é tua."
         )
     else:
-        if _is_recovered_hike(ctx):
-            discount = _pct(ctx.price, ctx.pre_hike_price)
-            lines.append(
-                f"Bateu, mas não é desconto de verdade: subiram antes e agora "
-                f"tá só {discount} abaixo do normal. A decisão é tua."
-            )
-        else:
-            lines.append(
-                "Bateu, mas ainda não é desconto de verdade pelos critérios "
-                "do Lowpoint. A decisão é tua."
-            )
         normal = ctx.baseline_price or ctx.median_30d
+        lines.append(_target_hit_neutro_reason(ctx, normal))
         if normal:
             lines.append(f"Preço normal: {fmt_brl(normal)}")
     lines.append(_footer(ctx))

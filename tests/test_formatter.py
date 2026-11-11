@@ -273,9 +273,9 @@ class TestFormatAlertTargetHitNeutro:
         assert "🎯" in msg.text
         assert "R$ 192,80" in msg.text
         assert "bateu teu alvo" in msg.text
-        assert "desde hoje" in msg.text
-        assert "não dá pra dizer" in msg.text
-        assert "O alvo é teu" in msg.text
+        assert "juntando histórico (menos de 1 dia)" in msg.text
+        assert "Não dá pra dizer" in msg.text
+        assert "A decisão é tua." in msg.text
 
     def test_no_verdict_claim(self):
         msg = format_alert(_ctx(
@@ -505,3 +505,95 @@ class TestNoAbbreviations:
             median_30d=Decimal("3450.00"),
         ))
         assert "14d" not in msg.text
+
+
+class TestTargetHitNeutroReasons:
+    """[TESTE] Alvo + neutro sem pico: um texto por motivo, texto inteiro."""
+
+    FOOTER = "\n\nVendedor não oficial · Com garantia"
+
+    def _text(self, **kw):
+        base = dict(
+            product_name="PS5 Digital Edition", item_id="MLB4001551723",
+            original_price=None, verdict="neutro",
+            reason="preço dentro da faixa normal (30 dias de dados)",
+            median_30d=Decimal("3450.00"), baseline_price=Decimal("3450.00"),
+            monitoring_days=30, pre_hike_price=None, has_warranty=True,
+            is_official=False, suspect_count=0,
+        )
+        base.update(kw)
+        msg = format_alert(AlertContext(**base))
+        assert msg.alert_type == "target_hit"
+        return msg.text.replace("<b>", "").replace("</b>", "")
+
+    def test_below_normal_less_than_5pct(self):
+        text = self._text(price=Decimal("3312.00"), target_price=Decimal("3350.00"),
+                          lowest_price=Decimal("3312.00"))
+        assert text == (
+            "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.312,00.\n\n"
+            "Bateu, mas tá só 4% abaixo do normal. Ainda não é desconto de verdade. "
+            "A decisão é tua.\n"
+            "Preço normal: R$ 3.450,00" + self.FOOTER
+        )
+
+    def test_5pct_or_more_but_not_lowest(self):
+        text = self._text(price=Decimal("3200.00"), target_price=Decimal("3300.00"),
+                          lowest_price=Decimal("3100.00"))
+        assert text == (
+            "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.200,00.\n\n"
+            "Bateu e tá 7% abaixo do normal, mas já esteve mais barato: R$ 3.100,00. "
+            "A decisão é tua.\n"
+            "Preço normal: R$ 3.450,00" + self.FOOTER
+        )
+
+    @pytest.mark.parametrize("price", ["3450.00", "3500.00"])
+    def test_at_or_above_normal(self, price):
+        p = Decimal(price)
+        text = self._text(price=p, target_price=Decimal("3600.00"),
+                          lowest_price=Decimal("3400.00"))
+        assert text == (
+            f"🎯 PS5 Digital Edition bateu teu alvo: {fmt_brl(p)}.\n\n"
+            "Bateu teu alvo, mas esse é o preço normal dele. Não é promoção. "
+            "A decisão é tua.\n"
+            "Preço normal: R$ 3.450,00" + self.FOOTER
+        )
+
+    def test_few_days_of_data(self):
+        text = self._text(price=Decimal("3312.00"), target_price=Decimal("3350.00"),
+                          lowest_price=Decimal("3312.00"), monitoring_days=3,
+                          median_30d=None, baseline_price=None)
+        assert text == (
+            "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.312,00.\n\n"
+            "Bateu, mas ainda tô juntando histórico (3 dias). "
+            "Não dá pra dizer se é desconto de verdade. A decisão é tua."
+            + self.FOOTER
+        )
+
+
+class TestNoHikeNeverClaimsHike:
+    """[TESTE] Sem pico, nenhum template fala em subida anterior."""
+
+    @pytest.mark.parametrize("verdict", ["real", "neutro", "maquiado"])
+    @pytest.mark.parametrize("price, target", [
+        ("3200.00", "3300.00"),   # alvo atingido
+        ("3200.00", "3000.00"),   # alvo não atingido
+        ("3450.00", "3500.00"),
+        ("3600.00", "3000.00"),
+    ])
+    @pytest.mark.parametrize("original", [None, "6000.00"])
+    @pytest.mark.parametrize("days", [0, 3, 30, 120])
+    @pytest.mark.parametrize("pre_hike", [None, "3450.00"])  # legado: pre_hike sem hike_pct
+    def test_never_mentions_hike(self, verdict, price, target, original, days, pre_hike):
+        ctx = AlertContext(
+            product_name="PS5 Digital Edition", item_id="MLB4001551723",
+            price=Decimal(price), original_price=Decimal(original) if original else None,
+            target_price=Decimal(target), verdict=verdict, reason="motivo",
+            lowest_price=Decimal("3100.00"), median_30d=Decimal("3450.00"),
+            monitoring_days=days, pre_hike_price=Decimal(pre_hike) if pre_hike else None,
+            hike_pct=None, hike_days=None, baseline_price=Decimal("3450.00"),
+            has_warranty=True, is_official=True, suspect_count=0,
+        )
+        text = format_alert(ctx).text
+        assert "Mesmo depois de subirem antes" not in text
+        assert "subiram antes" not in text.lower()
+
