@@ -146,3 +146,15 @@ class Alert(Base):
     )
 
     watch: Mapped["Watch"] = relationship(back_populates="alerts")
+
+
+class SystemState(Base):
+    """Marcadores operacionais (ex.: último aviso de coleta atrasada)."""
+
+    __tablename__ = "system_state"
+
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
+    )
