@@ -6,3 +6,4 @@
 - Design das telas: use o Paper
 - Nunca enviar mensagens ao chat real nem gravar no banco de produção com dados fictícios
 - Testes usam MockSource ou preview_alerts.py, sempre marcados com [TESTE] e sem gravar na tabela alerts
+- Nunca afirme que algo foi executado, testado, commitado ou está pendente de push sem mostrar a saída real do comando. Antes de dizer 'aguardando push', rode git status e git log origin/main..HEAD.

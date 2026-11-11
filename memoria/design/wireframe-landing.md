@@ -1,7 +1,8 @@
-# Wireframe — Landing Page Lowpoint (v7)
+# Wireframe — Landing Page Lowpoint (v8)
 
 > Validado contra o código corrigido em `lowpoint/verdict.py` e `lowpoint/telegram/formatter.py`.
-> Teste: `tests/test_landing_story.py` — 46 passed, 0 failed (total: 208).
+> Teste: `tests/test_landing_story.py` — 47 passed, 0 failed (total: 211).
+> Mudanças v8 (2026-11-10): SEGURA com pico usa template C — "O anúncio diz X% OFF (de R$ …)" e "Subiram X% em N dias", N contado do início do pico. Texto conferido por teste de igualdade exata.
 > Mudanças v7: recuperação >3% segue regra normal sobre baseline limpo; nota pós-pico no alerta. Validação: [cenários 4%, 10%, 20%](validacao-pos-pico.md).
 > Mudanças v6: "Preço riscado" em vez de "O anúncio diz", "há N dias" (não "em"), floor() no %, baseline_price separado de median_30d, FACHADA_THRESHOLD=3%.
 
@@ -33,9 +34,9 @@
 ```
 ⚠ SEGURA · PS5 Digital Edition · R$ 3.600,00
 
-Preço riscado: R$ 6.000,00 (−40%).
+O anúncio diz 40% OFF (de R$ 6.000,00).
 Antes de subir, custava R$ 3.450,00.
-Subiram 74% há 12 dias e baixaram de volta. Tá R$ 150,00 mais caro que antes. Segura.
+Subiram 74% em 12 dias e baixaram de volta. Tá R$ 150,00 mais caro que antes. Segura.
 
 Vendedor não oficial · Com garantia
 ```

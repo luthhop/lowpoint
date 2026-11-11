@@ -61,3 +61,5 @@
 - Publicação frontend: separar a landing estática do webhook Vercel existente. Acesso atual pessoal informado na página, CTA para GitHub; nenhum cadastro público ou integração nova com produção nesta etapa.
 
 - Publicação autorizada por Lucas (2026-11-05): landing em https://lowpoint-web.vercel.app, projeto Vercel `lowpoint-web` separado do webhook `lowpoint`; GitHub conectado com raiz `frontend`, Node 26.x, npm ci/build e dist. Acesso público verificado.
+- SEGURA template C (2026-11-10, Lucas): com pico detectado volta "O anúncio diz X% OFF (de R$ …)" e "Subiram X% em N dias" (N do início do pico até hoje). Reverte, só nesse template, as decisões de 05/11 "Preço riscado" e "há N dias"; SEGURA sem pico mantém "Preço riscado". Nunca diferença negativa: abaixo do pré-pico vira "Tá só X% abaixo…"; empate ou <1% vira "Voltou ao preço de antes".
+- Faixas pós-pico (2026-11-10, Lucas; desconto vs. pré-pico): ≤3% = fachada (maquiado/SEGURA); >3% e <5% = neutro (MONITORANDO, só envia com alvo atingido); ≥5% = real se também for o menor preço do histórico, senão neutro. Limite é ≥5% (REAL_DISCOUNT_THRESHOLD), coberto por teste em 0.05.
