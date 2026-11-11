@@ -460,8 +460,8 @@ class TestSeguraTemplateC:
         assert msg.alert_type == "neutro"
         assert text == (
             "MONITORANDO · PS5 Digital Edition · R$ 3.312,00\n\n"
-            "Preço atual. preço dentro da faixa normal (90 dias de dados)\n"
-            "Inflaram antes, mas mesmo assim tá 4% abaixo do preço normal.\n"
+            "Preço dentro da faixa normal (90 dias de dados).\n"
+            "Subiram antes, mas mesmo assim tá 4% abaixo do preço normal.\n"
             "Preço normal: R$ 3.450,00"
             + self.FOOTER
         )
@@ -472,7 +472,20 @@ class TestSeguraTemplateC:
         assert v.verdict == "neutro"
         assert msg.alert_type == "target_hit"
         assert "SEGURA" not in text and "PODE IR" not in text
-        assert "4% abaixo do preço normal" in text
+        assert text.count("abaixo do preço normal") == 1
+        assert text == (
+            "🎯 PS5 Digital Edition bateu teu alvo: R$ 3.312,00.\n\n"
+            "O alvo foi atingido, mas ainda não reúne os critérios de desconto real.\n"
+            "Preço normal: R$ 3.450,00\n"
+            "Subiram antes, mas mesmo assim tá 4% abaixo do preço normal."
+            + self.FOOTER
+        )
+
+    def test_recovered_note_once_in_pode_ir(self):
+        """PODE IR pós-pico (7% abaixo): a nota de recuperação sai uma vez só."""
+        v, msg, text = self._render_any(Decimal("3208.50"), TARGET)  # 3.450 × 0,93
+        assert v.verdict == "real"
+        assert text.count("Subiram antes, mas mesmo assim") == 1
 
     def test_hike_days_follows_hike_start(self):
         """{dias} acompanha o início do pico, não a janela fixa de 14 dias."""
@@ -590,7 +603,7 @@ class TestRecoveredHike:
             return
         assert "SEGURA" not in msg.text
         assert "Segura" not in msg.text
-        assert "Inflaram antes, mas mesmo assim tá" in msg.text
+        assert "Subiram antes, mas mesmo assim tá" in msg.text
         assert "Preço normal: R$ 3.450,00" in msg.text
         assert "Ainda tô conhecendo" not in msg.text
         if expected == "real":

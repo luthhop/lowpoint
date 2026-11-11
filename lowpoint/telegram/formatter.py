@@ -92,6 +92,14 @@ def _claimed_discount(ctx: AlertContext) -> str | None:
     return None
 
 
+def _sentence(text: str) -> str:
+    text = text.strip()
+    if not text:
+        return text
+    text = text[0].upper() + text[1:]
+    return text if text.endswith(".") else text + "."
+
+
 def _announced_discount(ctx: AlertContext) -> str | None:
     if ctx.original_price and ctx.original_price > ctx.price:
         pct = _pct(ctx.price, ctx.original_price)
@@ -107,7 +115,7 @@ def _recovered_hike_note(ctx: AlertContext) -> list[str]:
     ):
         discount = _pct(ctx.price, ctx.pre_hike_price)
         return [
-            f"Inflaram antes, mas mesmo assim tá {discount} abaixo do preço normal."
+            f"Subiram antes, mas mesmo assim tá {discount} abaixo do preço normal."
         ]
     return []
 
@@ -312,7 +320,7 @@ def _format_neutro(ctx: AlertContext) -> AlertMessage:
     name = escape(ctx.product_name)
     lines = [f"<b>MONITORANDO</b> · {name} · <b>{fmt_brl(ctx.price)}</b>"]
     lines.append("")
-    lines.append(f"Preço atual. {escape(ctx.reason)}")
+    lines.append(_sentence(escape(ctx.reason)))
     lines.extend(_recovered_hike_note(ctx))
     normal = ctx.baseline_price or ctx.median_30d
     if normal:
