@@ -208,12 +208,13 @@ def _detect_hike(
     if pre_hike_price > 0:
         pct_increase = (peak_in_window - pre_hike_price) / pre_hike_price
         if pct_increase > hike_threshold:
-            elevated = [p for p in in_window if p.price > pre_hike_price * Decimal("1.02")]
-            if elevated:
-                first_elevated = min(p.collected_at for p in elevated)
-                hike_days = max((now - first_elevated).days, 1)
-            else:
-                hike_days = hike_window_days
+            # Hike start always comes from the data, never a fixed window. With a
+            # threshold below 2%, fall back to the first point at the peak price.
+            elevated = [
+                p for p in in_window if p.price > pre_hike_price * Decimal("1.02")
+            ] or [p for p in in_window if p.price == peak_in_window]
+            first_elevated = min(p.collected_at for p in elevated)
+            hike_days = max((now - first_elevated).days, 1)
             return _HikeDetection(
                 pre_hike_price=pre_hike_price,
                 pct_increase=pct_increase,

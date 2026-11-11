@@ -92,6 +92,13 @@ def _claimed_discount(ctx: AlertContext) -> str | None:
     return None
 
 
+def _announced_discount(ctx: AlertContext) -> str | None:
+    if ctx.original_price and ctx.original_price > ctx.price:
+        pct = _pct(ctx.price, ctx.original_price)
+        return f"O anúncio diz {pct} OFF (de {fmt_brl(ctx.original_price)})."
+    return None
+
+
 def _recovered_hike_note(ctx: AlertContext) -> list[str]:
     if (
         ctx.pre_hike_price is not None
@@ -217,21 +224,22 @@ def _format_maquiado(ctx: AlertContext) -> AlertMessage:
     name = escape(ctx.product_name)
     lines = [f"<b>⚠ SEGURA</b> · {name} · <b>{fmt_brl(ctx.price)}</b>"]
     lines.append("")
-    claimed = _claimed_discount(ctx)
-    if claimed:
-        lines.append(claimed)
-    if ctx.pre_hike_price and ctx.hike_pct is not None:
+    if ctx.pre_hike_price and ctx.hike_pct is not None and ctx.hike_days:
+        announced = _announced_discount(ctx)
+        if announced:
+            lines.append(announced)
         lines.append(f"Antes de subir, custava {fmt_brl(ctx.pre_hike_price)}.")
         hike_str = f"{ctx.hike_pct * 100:.0f}%"
-        dias = ctx.hike_days if ctx.hike_days else 14
         diff = ctx.price - ctx.pre_hike_price
-        prefix = f"Subiram {hike_str} há {dias} dias e baixaram de volta. "
+        prefix = (
+            f"Subiram {hike_str} em {_dias(ctx.hike_days)} e baixaram de volta. "
+        )
         if diff > 0:
             lines.append(
                 prefix
                 + f"Tá {fmt_brl(diff)} mais caro que antes. Segura."
             )
-        elif diff < 0:
+        elif diff < 0 and math.floor(abs(diff) / ctx.pre_hike_price * 100) >= 1:
             pct_below_dec = abs(diff) / ctx.pre_hike_price
             pct_below_str = f"{math.floor(pct_below_dec * 100)}%"
             if pct_below_dec <= FACHADA_THRESHOLD:
@@ -252,6 +260,9 @@ def _format_maquiado(ctx: AlertContext) -> AlertMessage:
                 + "Voltou ao preço de antes. Desconto de fachada. Segura."
             )
     else:
+        claimed = _claimed_discount(ctx)
+        if claimed:
+            lines.append(claimed)
         normal = ctx.baseline_price or ctx.median_30d
         if normal:
             lines.append(f"Preço normal no último mês: {fmt_brl(normal)}.")

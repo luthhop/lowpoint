@@ -377,101 +377,109 @@ class TestHikeStillMaquiadoWhenSmallDiscount:
 # ─── Template SEGURA opção C: 3 casos ──────────────────────────────
 
 class TestSeguraTemplateC:
-    """Testa os 3 casos do template SEGURA (opção C)."""
+    """[TESTE] Template SEGURA opção C, texto exato, via compute_verdict + format_alert."""
 
-    def test_standard_27nov_mais_caro(self):
-        """27/Nov: R$ 3.600 vs pré-pico R$ 3.450 → 'mais caro que antes'."""
+    NOW = datetime(2026, 11, 27, 12, 0, tzinfo=timezone.utc)
+    FOOTER = "\n\nVendedor não oficial · Com garantia"
+    HEAD = (
+        "⚠ SEGURA · PS5 Digital Edition · {price}\n\n"
+        "O anúncio diz {off} OFF (de R$ 6.000,00).\n"
+        "Antes de subir, custava R$ 3.450,00.\n"
+        "Subiram 74% em 12 dias e baixaram de volta. "
+    )
+
+    def _render(self, price):
         history = _build_history_until(
             datetime(2026, 11, 26, 12, 0, tzinfo=timezone.utc)
         )
-        now = datetime(2026, 11, 27, 12, 0, 0, tzinfo=timezone.utc)
-        v = compute_verdict(
-            current_price=Decimal("3600.00"),
-            original_price=Decimal("6000.00"),
-            history=history,
-            now=now,
-        )
+        v = compute_verdict(price, Decimal("6000.00"), history, self.NOW)
+        assert v.verdict == "maquiado"
+        assert v.hike_days == 12  # 15/11 (início do pico) → 27/11
         ctx = AlertContext(
-            product_name=PRODUCT_NAME,
-            item_id=ITEM_ID,
-            price=Decimal("3600.00"),
-            original_price=Decimal("6000.00"),
-            target_price=TARGET,
-            verdict=v.verdict,
-            reason=v.reason,
-            lowest_price=v.lowest_price,
-            median_30d=v.median_30d,
-            monitoring_days=v.monitoring_days,
-            pre_hike_price=v.pre_hike_price,
-            hike_pct=v.hike_pct,
-            hike_days=v.hike_days,
-            has_warranty=True,
-            is_official=False,
-            suspect_count=0,
+            product_name=PRODUCT_NAME, item_id=ITEM_ID, price=price,
+            original_price=Decimal("6000.00"), target_price=TARGET,
+            verdict=v.verdict, reason=v.reason, lowest_price=v.lowest_price,
+            median_30d=v.median_30d, monitoring_days=v.monitoring_days,
+            pre_hike_price=v.pre_hike_price, hike_pct=v.hike_pct,
+            hike_days=v.hike_days, baseline_price=v.baseline_price,
+            has_warranty=True, is_official=False, suspect_count=0,
         )
         msg = format_alert(ctx)
-        assert "Antes de subir, custava R$ 3.450,00" in msg.text
-        assert "74%" in msg.text
-        assert "há 12 dias" in msg.text
-        assert "R$ 150,00 mais caro que antes" in msg.text
-        assert "Segura." in msg.text
-        assert "Vendedor não oficial" in msg.text
-        assert "Preço riscado:" in msg.text
+        assert msg.alert_type == "verdict_maquiado"
+        return msg.text.replace("<b>", "").replace("</b>", "")
+
+    def test_standard_27nov_mais_caro(self):
+        text = self._render(Decimal("3600.00"))
+        assert text == (
+            self.HEAD.format(price="R$ 3.600,00", off="40%")
+            + "Tá R$ 150,00 mais caro que antes. Segura."
+            + self.FOOTER
+        )
 
     def test_edge_2pct_below_prehike(self):
-        """2% abaixo do pré-pico (< 3% fachada threshold) → 'Desconto de fachada'."""
-        ctx = AlertContext(
-            product_name=PRODUCT_NAME,
-            item_id=ITEM_ID,
-            price=Decimal("3381.00"),
-            original_price=Decimal("6000.00"),
-            target_price=TARGET,
-            verdict="maquiado",
-            reason="maquiado",
-            lowest_price=Decimal("3381.00"),
-            median_30d=Decimal("3600.00"),
-            monitoring_days=118,
-            pre_hike_price=Decimal("3450.00"),
-            hike_pct=Decimal("0.7391"),
-            hike_days=12,
-            baseline_price=Decimal("3450.00"),
-            has_warranty=True,
-            is_official=False,
-            suspect_count=0,
+        text = self._render(Decimal("3381.00"))  # 3.450 × 0,98
+        assert text == (
+            self.HEAD.format(price="R$ 3.381,00", off="43%")
+            + "Tá só 2% abaixo do que custava antes. Desconto de fachada. Segura."
+            + self.FOOTER
         )
-        msg = format_alert(ctx)
-        assert "Desconto de fachada" in msg.text
-        assert "2% abaixo" in msg.text
-        assert "há 12 dias" in msg.text
-        assert "Segura." in msg.text
-        assert "mais caro" not in msg.text
+        assert "-R$" not in text and "−R$" not in text
 
     def test_tied_equal_to_prehike(self):
-        """Igual ao pré-pico → 'Voltou ao preço de antes'."""
+        text = self._render(Decimal("3450.00"))
+        assert text == (
+            self.HEAD.format(price="R$ 3.450,00", off="42%")
+            + "Voltou ao preço de antes. Desconto de fachada. Segura."
+            + self.FOOTER
+        )
+        assert "R$ 0,00" not in text
+
+    def _render_any(self, price, target):
+        history = _build_history_until(
+            datetime(2026, 11, 26, 12, 0, tzinfo=timezone.utc)
+        )
+        history.append(PricePoint(price, Decimal("6000.00"), self.NOW))
+        v = compute_verdict(price, Decimal("6000.00"), history, self.NOW)
         ctx = AlertContext(
-            product_name=PRODUCT_NAME,
-            item_id=ITEM_ID,
-            price=Decimal("3450.00"),
-            original_price=Decimal("6000.00"),
-            target_price=TARGET,
-            verdict="maquiado",
-            reason="maquiado",
-            lowest_price=Decimal("3450.00"),
-            median_30d=Decimal("3600.00"),
-            monitoring_days=118,
-            pre_hike_price=Decimal("3450.00"),
-            hike_pct=Decimal("0.7391"),
-            hike_days=12,
-            baseline_price=Decimal("3450.00"),
-            has_warranty=True,
-            is_official=False,
-            suspect_count=0,
+            product_name=PRODUCT_NAME, item_id=ITEM_ID, price=price,
+            original_price=Decimal("6000.00"), target_price=target,
+            verdict=v.verdict, reason=v.reason, lowest_price=v.lowest_price,
+            median_30d=v.median_30d, monitoring_days=v.monitoring_days,
+            pre_hike_price=v.pre_hike_price, hike_pct=v.hike_pct,
+            hike_days=v.hike_days, baseline_price=v.baseline_price,
+            has_warranty=True, is_official=False, suspect_count=0,
         )
         msg = format_alert(ctx)
-        assert "Voltou ao preço de antes" in msg.text
-        assert "Desconto de fachada" in msg.text
-        assert "Segura." in msg.text
-        assert "mais caro" not in msg.text
+        return v, msg, msg.text.replace("<b>", "").replace("</b>", "")
+
+    def test_faixa_4pct_below_prehike_is_monitorando(self):
+        """Faixa 3–5%: 4% abaixo do pré-pico → neutro, MONITORANDO, sem SEGURA."""
+        v, msg, text = self._render_any(Decimal("3312.00"), TARGET)  # 3.450 × 0,96
+        assert v.verdict == "neutro"
+        assert v.baseline_price == Decimal("3450.00")
+        assert msg.alert_type == "neutro"
+        assert text == (
+            "MONITORANDO · PS5 Digital Edition · R$ 3.312,00\n\n"
+            "Preço atual. preço dentro da faixa normal (90 dias de dados)\n"
+            "Inflaram antes, mas mesmo assim tá 4% abaixo do preço normal.\n"
+            "Preço normal: R$ 3.450,00"
+            + self.FOOTER
+        )
+
+    def test_faixa_4pct_with_target_hit(self):
+        """4% abaixo + alvo atingido: único caso em que o neutro vira mensagem."""
+        v, msg, text = self._render_any(Decimal("3312.00"), Decimal("3350.00"))
+        assert v.verdict == "neutro"
+        assert msg.alert_type == "target_hit"
+        assert "SEGURA" not in text and "PODE IR" not in text
+        assert "4% abaixo do preço normal" in text
+
+    def test_hike_days_follows_hike_start(self):
+        """{dias} acompanha o início do pico, não a janela fixa de 14 dias."""
+        later = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
+        history = _build_history_until(datetime(2026, 11, 19, 12, 0, tzinfo=timezone.utc))
+        v = compute_verdict(Decimal("3600.00"), Decimal("6000.00"), history, later)
+        assert v.hike_days == 5
 
 
 class TestLandingGolpe:
