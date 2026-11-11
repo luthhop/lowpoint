@@ -1,9 +1,15 @@
 name: Coleta de preços
 
 on:
+  # Reserva do /api/tick. Horários do GitHub são UTC (BRT = UTC-3).
   schedule:
+    # O ano todo, :17 de cada hora (fora do :00, horário de pico do GitHub).
     - cron: "17 * * * *"
+    # BF, 23/11 00:00 a 27/11 23:59 UTC = 22/11 21:00 a 27/11 20:59 BRT.
+    # Com o :17 acima, dá um disparo a cada 15 min.
     - cron: "2,32,47 * 23-27 11 *"
+    # BF, 28/11 00:00 a 02:59 UTC = 27/11 21:00 a 23:59 BRT (últimas 3h).
+    - cron: "2,32,47 0-2 28 11 *"
   workflow_dispatch:
 
 concurrency:
