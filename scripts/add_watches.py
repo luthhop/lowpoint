@@ -4,8 +4,10 @@
     python scripts/add_watches.py --apply      # grava watch + 1º ponto do histórico
 
 Regras:
-- Usa register_product (a mesma função do /adicionar) e o mesmo limite de 20
-  watches ativos por chat do webhook. Apelido vem da lista.
+- Usa register_product (a mesma função do /adicionar). São watches de análise:
+  gravados com silent=true e contados no teto de silenciosos
+  (MAX_SILENT_WATCHES_PER_CHAT), fora do limite de 20 do /adicionar.
+  Apelido vem da lista.
 - Alvo provisório = 50% da melhor oferta (select_best_offer, como o coletor),
   arredondado para baixo para reais inteiros.
 - Chamadas ao ML sequenciais, 1 s entre elas, 1 tentativa só. 429 → para e
@@ -36,7 +38,7 @@ from lowpoint.models import PriceHistory, Product, Watch  # noqa: E402
 from lowpoint.register import register_product  # noqa: E402
 from lowpoint.sources.base import CatalogSnapshot  # noqa: E402
 from lowpoint.sources.ml_catalog import REQUEST_TIMEOUT, MLCatalogSource  # noqa: E402
-from lowpoint.telegram.webhook import _MAX_WATCHES_PER_CHAT  # noqa: E402
+from lowpoint.config import MAX_SILENT_WATCHES_PER_CHAT  # noqa: E402
 
 LIST_FILE = Path(__file__).resolve().parent.parent / "memoria" / "analise-bf.md"
 CALL_INTERVAL_SECONDS = 1.0
@@ -210,6 +212,7 @@ def apply_row(row: Row, chat_id: int) -> str:
     try:
         w = session.get(Watch, watch.id)
         w.nickname = row.entry.nickname
+        w.silent = True
         p = session.get(Product, product.id)
         snap = row.snapshot
         if snap.title and p.title.startswith("(pendente"):
@@ -258,7 +261,11 @@ def main() -> int:
         session.connection().exec_driver_sql("SET TRANSACTION READ ONLY")
         active = (
             session.query(Watch)
-            .filter(Watch.chat_id == chat_id, Watch.active.is_(True))
+            .filter(
+                Watch.chat_id == chat_id,
+                Watch.active.is_(True),
+                Watch.silent.is_(True),
+            )
             .count()
         )
         source = GentleMLSource(allow_refresh=args.apply)
@@ -279,12 +286,12 @@ def main() -> int:
 
     new_rows = [r for r in rows if r.registered in ("não", "produto sim, watch não")]
     total_after = active + len(new_rows)
-    print(f"Limite: {active} watches ativos + {len(new_rows)} novos = {total_after} "
-          f"(máx. {_MAX_WATCHES_PER_CHAT})")
+    print(f"Teto de silenciosos: {active} ativos + {len(new_rows)} novos = {total_after} "
+          f"(máx. {MAX_SILENT_WATCHES_PER_CHAT})")
     if stopped:
         print(f"\nPARADO: {stopped}")
         return 2
-    if total_after > _MAX_WATCHES_PER_CHAT:
+    if total_after > MAX_SILENT_WATCHES_PER_CHAT:
         print("ESTOURA O LIMITE: nada será gravado.")
         return 1
 
