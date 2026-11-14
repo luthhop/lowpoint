@@ -3,7 +3,14 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from lowpoint.tick import TickDeps, handle_tick, in_bf_window
+from lowpoint.tick import (
+    OFF_PEAK_MIN_GAP,
+    OFF_PEAK_TICK_PERIOD,
+    STALE_AFTER,
+    TickDeps,
+    handle_tick,
+    in_bf_window,
+)
 
 SECRET = "s3cret-tick"
 UTC = timezone.utc
@@ -111,13 +118,13 @@ class TestStaleWarning:
 
 class TestDispatchRhythm:
     def test_off_peak_skips_when_recent(self):
-        fake = Fake(OFF_PEAK - timedelta(minutes=50))
+        fake = Fake(OFF_PEAK - timedelta(minutes=25))
         result = handle_tick("POST", SECRET, OFF_PEAK, fake.deps())
         assert result == {"statusCode": 200, "dispatched": False, "warned": False}
         assert fake.dispatches == 0
 
-    def test_off_peak_dispatches_after_55_min(self):
-        fake = Fake(OFF_PEAK - timedelta(minutes=56))
+    def test_off_peak_dispatches_after_25_min(self):
+        fake = Fake(OFF_PEAK - timedelta(minutes=26))
         handle_tick("POST", SECRET, OFF_PEAK, fake.deps())
         assert fake.dispatches == 1
 
@@ -172,3 +179,38 @@ class TestHttpHandler:
         resp = requests.request(method, server, headers=headers, timeout=5)
         assert resp.status_code == 401
         assert resp.content == b"{}"
+
+
+# ─── Batida horária fora da BF + reserva do GitHub (incidente 11–13/11) ────
+
+COLLECT_LAG = timedelta(seconds=30)  # dispatch → collected_at (observado: 17–87 s)
+
+
+class TestHourlyReplay:
+    """[TESTE] Batida às :45 de hora em hora; o cron de reserva cai a cada
+    minuto 0–59 depois do dispatch. Nenhuma combinação pode gerar aviso."""
+
+    @pytest.mark.parametrize("schedule_minute", range(60))
+    def test_schedule_landing_between_ticks_never_warns(self, schedule_minute):
+        # 10/11 15:45 BRT: batida que acabou de disparar uma coleta
+        first_tick = datetime(2026, 11, 10, 18, 45, tzinfo=UTC)
+        fake = Fake(first_tick + COLLECT_LAG)
+        schedule_at = first_tick + timedelta(minutes=schedule_minute) + COLLECT_LAG
+        fake.last_collected = max(fake.last_collected, schedule_at)
+
+        for n in (1, 2, 3):  # 3h de batidas
+            now = first_tick + n * OFF_PEAK_TICK_PERIOD
+            result = handle_tick("POST", SECRET, now, fake.deps())
+            if result["dispatched"]:
+                fake.last_collected = now + COLLECT_LAG
+
+        assert fake.messages == [], (
+            f"schedule +{schedule_minute} min gerou aviso: {fake.messages}"
+        )
+
+
+def test_min_gap_plus_tick_period_stays_under_stale_threshold():
+    # Pular uma batida nunca pode deixar a seguinte além do limite do aviso,
+    # com folga para atraso do cron e da coleta.
+    tolerance = timedelta(minutes=5)
+    assert OFF_PEAK_MIN_GAP + OFF_PEAK_TICK_PERIOD + tolerance <= STALE_AFTER

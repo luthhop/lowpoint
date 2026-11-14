@@ -1,11 +1,19 @@
 """Batida externa (/api/tick): dispara a coleta e avisa se ela atrasar.
 
-Um cron externo chama POST /api/tick a cada 15 min, o tempo todo. Quem
-decide o ritmo é este módulo:
+Um cron externo chama POST /api/tick: de hora em hora fora da BF e a cada
+15 min de 23 a 27/11 (poupa o compute do Neon, que acorda a cada batida).
+Quem decide se coleta é este módulo:
 - 23–27/11 (horário de Brasília): dispara a coleta em toda batida.
-- Fora disso: só dispara se a última coleta tiver mais de 55 min.
+- Fora disso: só dispara se a última coleta tiver mais de 25 min.
 Independente do disparo, se a última coleta tiver mais de 90 min, manda
 aviso no Telegram, no máximo 1 por hora de atraso.
+
+Regra dos 25 min: pular uma batida não pode fazer a seguinte passar do
+limite do aviso. Precisa valer OFF_PEAK_MIN_GAP + OFF_PEAK_TICK_PERIOD +
+folga (5 min de atraso do cron/coleta) <= STALE_AFTER, ou seja,
+25 + 60 + 5 <= 90. Com 55 min (valor pensado para batida de 15 min), a
+coleta de reserva do GitHub caindo 5–29 min depois de um dispatch fazia a
+batida seguinte pular e a outra avisar com ~1h45 de atraso (11–13/11).
 """
 
 import hmac
@@ -21,7 +29,8 @@ TICK_SECRET_HEADER = "X-Tick-Secret"
 BRT = timezone(timedelta(hours=-3))  # Brasil sem horário de verão desde 2019
 BF_START = date(2026, 11, 23)
 BF_END = date(2026, 11, 27)
-OFF_PEAK_MIN_GAP = timedelta(minutes=55)
+OFF_PEAK_MIN_GAP = timedelta(minutes=25)
+OFF_PEAK_TICK_PERIOD = timedelta(hours=1)  # cadência do cron externo fora da BF
 STALE_AFTER = timedelta(minutes=90)
 WARNING_REPEAT = timedelta(hours=1)
 STALE_WARNING_KEY = "stale_collect_warning"
