@@ -1,7 +1,8 @@
-# Wireframe — Landing Page Lowpoint (v10)
+# Wireframe — Landing Page Lowpoint (v11)
 
 > Validado contra o código corrigido em `lowpoint/verdict.py` e `lowpoint/telegram/formatter.py`.
 > Teste: `tests/test_landing_story.py` — 53 passed, 0 failed (total: 250).
+> Mudanças v11 (2026-11-14): SEGURA com pico diz quanto baixaram do topo: "e depois baixaram 40%" (antes "e baixaram de volta"). SEGURA só sai depois de recuo ≥5% do topo do pico.
 > Mudanças v10 (2026-11-14): modelo da web decidido — vitrine com dados ao vivo (painel só leitura dos produtos monitorados) + beta por convite via allowlist; abertura geral na Fase 2. CTA principal "Ver o código", secundário "Quero testar". Subtítulo, reforços e resposta do FAQ são texto proposto (aguardam aprovação no Paper). Destino do "Quero testar" ainda em aberto.
 > Mudanças v9 (2026-11-10): PODE IR com pico junta os 7% numa linha só ("Mesmo depois de subirem antes, tá X% abaixo do normal"). Pendente: o trecho do PODE IR em `frontend/src/App.tsx` ainda usa a linha antiga.
 > Mudanças v8 (2026-11-10): SEGURA com pico usa template C — "O anúncio diz X% OFF (de R$ …)" e "Subiram X% em N dias", N contado do início do pico. Texto conferido por teste de igualdade exata.
@@ -38,7 +39,7 @@
 
 O anúncio diz 40% OFF (de R$ 6.000,00).
 Antes de subir, custava R$ 3.450,00.
-Subiram 74% em 12 dias e baixaram de volta. Tá R$ 150,00 mais caro que antes. Segura.
+Subiram 74% em 12 dias e depois baixaram 40%. Tá R$ 150,00 mais caro que antes. Segura.
 
 Vendedor não oficial · Com garantia
 ```
