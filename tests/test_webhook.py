@@ -172,6 +172,7 @@ class TestAdicionarLivePrice:
         mock_product.title = "(pendente)"
         mock_watch = MagicMock()
         mock_watch.id = 1
+        mock_watch.silent = False
         return mock_product, mock_watch
 
     def test_shows_price_on_success(self, db_session):
@@ -373,3 +374,66 @@ class TestListaSilenciosos:
         text = self._lista(db_session)
         assert "+17 em análise (silenciosos)" in text
         assert "Produto 100" not in text
+
+
+class TestAdicionarReativaSilencioso:
+    def test_adicionar_on_silent_watch_turns_it_normal(self, db_session):
+        product, watch = _seed(db_session)
+        watch.silent = True
+        db_session.commit()
+        watch_id = watch.id
+        with (
+            patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),
+            patch("lowpoint.register.SessionLocal", return_value=db_session),
+            patch("lowpoint.telegram.webhook._fetch_live_price", return_value={}),
+        ):
+            result = handle_update(
+                _update("/adicionar mercadolivre.com.br/p/MLB57081243 3000"), "test-secret"
+            )
+        assert "Pronto" in result["text"]
+        w = db_session.get(Watch, watch_id)
+        db_session.refresh(w)
+        assert w.silent is False
+        assert w.target_price == Decimal("3000")
+
+    def test_adicionar_on_silent_respects_limit_of_20(self, db_session):
+        _seed_many(db_session, 20, silent=False)
+        product, watch = _seed(db_session)
+        watch.silent = True
+        db_session.commit()
+        watch_id = watch.id
+        with (
+            patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),
+            patch("lowpoint.register.SessionLocal", return_value=db_session),
+            patch("lowpoint.telegram.webhook._fetch_live_price", return_value={}),
+        ):
+            result = handle_update(
+                _update("/adicionar mercadolivre.com.br/p/MLB57081243 3000"), "test-secret"
+            )
+        assert "Limite de 20" in result["text"]
+        assert db_session.get(Watch, watch_id).silent is True
+
+
+class TestRemoverApelidoSemSilenciosos:
+    def _buttons(self, db_session, cmd):
+        with patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session):
+            result = handle_update(_update(cmd), "test-secret")
+        return result, [b[0]["text"] for b in result.get("reply_markup", {}).get("inline_keyboard", [])]
+
+    @pytest.mark.parametrize("cmd", ["/remover", "/apelido"])
+    def test_silent_not_listed(self, db_session, cmd):
+        _seed_many(db_session, 2, silent=False)
+        _seed_many(db_session, 3, silent=True, start=100)
+        _, buttons = self._buttons(db_session, cmd)
+        assert len(buttons) == 2
+        assert not any("Produto 10" in b for b in buttons)
+
+    @pytest.mark.parametrize("cmd,empty", [
+        ("/remover", "Nenhum produto pra remover."),
+        ("/apelido", "Nenhum produto pra renomear."),
+    ])
+    def test_only_silent_means_empty(self, db_session, cmd, empty):
+        _seed_many(db_session, 3, silent=True, start=100)
+        result, buttons = self._buttons(db_session, cmd)
+        assert buttons == []
+        assert result["text"] == empty

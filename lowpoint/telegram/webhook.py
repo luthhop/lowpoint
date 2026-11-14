@@ -117,11 +117,15 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
 
     product, watch = register_product(catalog_id, target, chat_id)
 
-    if nickname:
+    # /adicionar é pedido explícito de alerta: um watch silencioso (análise)
+    # vira normal. O limite acima já contou só os não silenciosos.
+    if nickname or watch.silent:
         session = SessionLocal()
         try:
-            w = session.query(Watch).get(watch.id)
-            w.nickname = nickname
+            w = session.get(Watch, watch.id)
+            if nickname:
+                w.nickname = nickname
+            w.silent = False
             session.commit()
         finally:
             session.close()
@@ -261,7 +265,7 @@ def _cmd_remover(chat_id: int) -> dict:
         watches = (
             session.query(Watch)
             .join(Product)
-            .filter(Watch.chat_id == chat_id, Watch.active.is_(True))
+            .filter(Watch.chat_id == chat_id, Watch.active.is_(True), Watch.silent.is_(False))
             .order_by(Watch.created_at)
             .all()
         )
@@ -302,7 +306,7 @@ def _cmd_apelido(chat_id: int, text: str) -> dict:
         watches = (
             session.query(Watch)
             .join(Product)
-            .filter(Watch.chat_id == chat_id, Watch.active.is_(True))
+            .filter(Watch.chat_id == chat_id, Watch.active.is_(True), Watch.silent.is_(False))
             .order_by(Watch.created_at)
             .all()
         )
