@@ -6,11 +6,11 @@
 ## Sprint 3 — em andamento
 - Pós-pico: ≤3% SEGURA (template C), 3–5% MONITORANDO, ≥5% + menor histórico = PODE IR
 - Backtest real 10/11: 81 vereditos, 0 mudanças, 0 picos (histórico <14d não exercita o fix)
-- PROBLEMA agendador: cron GitHub de hora em hora disparou só 3–5x/dia (intervalo mediano 7h, 03–10/11)
+- Tick ATIVO: cron externo horário às :45 disparando workflow_dispatch (verificado 14/11 no GitHub e no banco)
 - /api/tick no main (10/11): dispara workflow_dispatch + aviso Telegram se coleta >90 min
-- system_state aplicada no Neon (alembic e3f4a5b6c7d8). Pendente Lucas: token, env vars Vercel, cron externo
+- Aviso falso a cada ~2h (11–13/11): gap 55→25 min p/ batida horária (14/11). Vigiar: scripts/audit_collections.py --hours N
 - Coleta: timeout (5s,15s), retry 429/5xx/rede (3 tentativas), log de chamadas por execução
-- 446 testes Python + 5 frontend (10/11); landing App.tsx ainda com linha antiga do PODE IR
+- 507 testes Python (14/11) + 5 frontend; landing App.tsx ainda com linha antiga do PODE IR
 ## Design e landing
 - Landing publicada: https://lowpoint-web.vercel.app; projeto lowpoint-web, raiz frontend
 - Lucas quer animações com mais impacto — ritmo etiqueta → histórico → SEGURA → desconto real → alerta
