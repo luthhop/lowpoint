@@ -54,6 +54,7 @@ class AlertContext:
     baseline_price: Decimal | None = None
     cheapest_suspect_price: Decimal | None = None
     offer_count: int = 0
+    peak_price: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,18 @@ def _announced_discount(ctx: AlertContext) -> str | None:
         pct = _pct(ctx.price, ctx.original_price)
         return f"O anúncio diz {pct} OFF (de {fmt_brl(ctx.original_price)})."
     return None
+
+
+def _hike_period(days: int) -> str:
+    return "menos de um dia" if days < 1 else _dias(days)
+
+
+def _retreat(ctx: AlertContext) -> str:
+    """Quanto o preço atual caiu do topo do pico (floor, como os outros %)."""
+    if ctx.peak_price and ctx.peak_price > ctx.price:
+        pct = math.floor((ctx.peak_price - ctx.price) / ctx.peak_price * 100)
+        return f"depois baixaram {pct}%"
+    return "depois baixaram"
 
 
 def _is_recovered_hike(ctx: AlertContext) -> bool:
@@ -278,16 +291,14 @@ def _format_maquiado(ctx: AlertContext) -> AlertMessage:
     name = escape(ctx.product_name)
     lines = [f"<b>⚠ SEGURA</b> · {name} · <b>{fmt_brl(ctx.price)}</b>"]
     lines.append("")
-    if ctx.pre_hike_price and ctx.hike_pct is not None and ctx.hike_days:
+    if ctx.pre_hike_price and ctx.hike_pct is not None and ctx.hike_days is not None:
         announced = _announced_discount(ctx)
         if announced:
             lines.append(announced)
         lines.append(f"Antes de subir, custava {fmt_brl(ctx.pre_hike_price)}.")
         hike_str = f"{ctx.hike_pct * 100:.0f}%"
         diff = ctx.price - ctx.pre_hike_price
-        prefix = (
-            f"Subiram {hike_str} em {_dias(ctx.hike_days)} e baixaram de volta. "
-        )
+        prefix = f"Subiram {hike_str} em {_hike_period(ctx.hike_days)} e {_retreat(ctx)}. "
         if diff > 0:
             lines.append(
                 prefix

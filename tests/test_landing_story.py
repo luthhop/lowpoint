@@ -165,7 +165,7 @@ class TestLandingSegura27Nov:
             monitoring_days=v.monitoring_days,
             pre_hike_price=v.pre_hike_price,
             hike_pct=v.hike_pct,
-            hike_days=v.hike_days,
+            hike_days=v.hike_days, peak_price=v.peak_price,
             has_warranty=True,
             is_official=False,
             suspect_count=0,
@@ -242,7 +242,7 @@ class TestLandingPodeIr02Dez:
             monitoring_days=v.monitoring_days,
             pre_hike_price=v.pre_hike_price,
             hike_pct=v.hike_pct,
-            hike_days=v.hike_days,
+            hike_days=v.hike_days, peak_price=v.peak_price,
             baseline_price=v.baseline_price,
             has_warranty=True,
             is_official=True,
@@ -385,7 +385,7 @@ class TestSeguraTemplateC:
         "⚠ SEGURA · PS5 Digital Edition · {price}\n\n"
         "O anúncio diz {off} OFF (de R$ 6.000,00).\n"
         "Antes de subir, custava R$ 3.450,00.\n"
-        "Subiram 74% em 12 dias e baixaram de volta. "
+        "Subiram 74% em 12 dias e depois baixaram {recuo}. "
     )
 
     def _render(self, price):
@@ -401,7 +401,7 @@ class TestSeguraTemplateC:
             verdict=v.verdict, reason=v.reason, lowest_price=v.lowest_price,
             median_30d=v.median_30d, monitoring_days=v.monitoring_days,
             pre_hike_price=v.pre_hike_price, hike_pct=v.hike_pct,
-            hike_days=v.hike_days, baseline_price=v.baseline_price,
+            hike_days=v.hike_days, peak_price=v.peak_price, baseline_price=v.baseline_price,
             has_warranty=True, is_official=False, suspect_count=0,
         )
         msg = format_alert(ctx)
@@ -411,7 +411,7 @@ class TestSeguraTemplateC:
     def test_standard_27nov_mais_caro(self):
         text = self._render(Decimal("3600.00"))
         assert text == (
-            self.HEAD.format(price="R$ 3.600,00", off="40%")
+            self.HEAD.format(price="R$ 3.600,00", off="40%", recuo="40%")
             + "Tá R$ 150,00 mais caro que antes. Segura."
             + self.FOOTER
         )
@@ -419,7 +419,7 @@ class TestSeguraTemplateC:
     def test_edge_2pct_below_prehike(self):
         text = self._render(Decimal("3381.00"))  # 3.450 × 0,98
         assert text == (
-            self.HEAD.format(price="R$ 3.381,00", off="43%")
+            self.HEAD.format(price="R$ 3.381,00", off="43%", recuo="43%")
             + "Tá só 2% abaixo do que custava antes. Desconto de fachada. Segura."
             + self.FOOTER
         )
@@ -428,7 +428,7 @@ class TestSeguraTemplateC:
     def test_tied_equal_to_prehike(self):
         text = self._render(Decimal("3450.00"))
         assert text == (
-            self.HEAD.format(price="R$ 3.450,00", off="42%")
+            self.HEAD.format(price="R$ 3.450,00", off="42%", recuo="42%")
             + "Voltou ao preço de antes. Desconto de fachada. Segura."
             + self.FOOTER
         )
@@ -446,7 +446,7 @@ class TestSeguraTemplateC:
             verdict=v.verdict, reason=v.reason, lowest_price=v.lowest_price,
             median_30d=v.median_30d, monitoring_days=v.monitoring_days,
             pre_hike_price=v.pre_hike_price, hike_pct=v.hike_pct,
-            hike_days=v.hike_days, baseline_price=v.baseline_price,
+            hike_days=v.hike_days, peak_price=v.peak_price, baseline_price=v.baseline_price,
             has_warranty=True, is_official=False, suspect_count=0,
         )
         msg = format_alert(ctx)
@@ -621,7 +621,7 @@ class TestRecoveredHike:
             verdict=v.verdict, reason=v.reason, lowest_price=v.lowest_price,
             median_30d=v.median_30d, monitoring_days=v.monitoring_days,
             pre_hike_price=v.pre_hike_price, hike_pct=v.hike_pct,
-            hike_days=v.hike_days, baseline_price=v.baseline_price,
+            hike_days=v.hike_days, peak_price=v.peak_price, baseline_price=v.baseline_price,
             has_warranty=True, is_official=True, suspect_count=0,
         )
         msg = format_alert(ctx)

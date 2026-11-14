@@ -301,3 +301,13 @@ class TestReplayBlackFriday:
                 assert t2 - t1 >= timedelta(hours=1)
             maq = [ts for ts, t in alerts if alert_kind(t) == "maquiado"]
             assert len(maq) <= 1  # um dia só: no máximo 1 maquiado
+
+    def test_replay_no_maquiado_while_price_rises(self, db_session):
+        """Pico de 06:00 a 11:45 BRT ainda não caiu: não pode sair SEGURA (proposta 14/11)."""
+        new = _replay(db_session, legacy=False)
+        drop = BF_START + timedelta(hours=12)  # 12:00 BRT
+        early_maquiado = [
+            (name, ts) for name, alerts in new.items()
+            for ts, t in alerts if alert_kind(t) == "maquiado" and ts < drop
+        ]
+        assert early_maquiado == []

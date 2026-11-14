@@ -5,6 +5,7 @@ from statistics import median
 
 from lowpoint.config import (
     FACHADA_THRESHOLD,
+    HIKE_RETREAT_THRESHOLD,
     HIKE_THRESHOLD,
     INFLATED_ORIGINAL_THRESHOLD,
     MEDIAN_WINDOW_DAYS,
@@ -33,6 +34,7 @@ class VerdictResult:
     hike_pct: Decimal | None = None
     hike_days: int | None = None
     baseline_price: Decimal | None = None
+    peak_price: Decimal | None = None  # máximo da janela do pico
 
 
 def compute_verdict(
@@ -48,6 +50,7 @@ def compute_verdict(
     hike_threshold: Decimal = HIKE_THRESHOLD,
     inflated_original_threshold: Decimal = INFLATED_ORIGINAL_THRESHOLD,
     fachada_threshold: Decimal = FACHADA_THRESHOLD,
+    hike_retreat_threshold: Decimal = HIKE_RETREAT_THRESHOLD,
 ) -> VerdictResult:
     if now is None:
         now = datetime.now(timezone.utc)
@@ -101,6 +104,29 @@ def compute_verdict(
 
     if hike_result is not None:
         baseline_price = hike_result.pre_hike_price
+        peak = hike_result.peak_price
+        retreat = (peak - current_price) / peak if peak > 0 else Decimal(0)
+
+        # Pico em andamento: ainda não "baixou", então não é desconto maquiado.
+        # Sem recuo suficiente o preço segue acima do pré-pico (pico > +10%),
+        # logo também não há desconto real a avaliar.
+        if retreat < hike_retreat_threshold:
+            return VerdictResult(
+                verdict="neutro",
+                current_price=current_price,
+                lowest_price=lowest_price,
+                median_30d=median_30d,
+                monitoring_days=monitoring_days,
+                reason=(
+                    f"preço em alta: subiu {hike_result.pct_increase:.0%} sobre "
+                    f"R$ {hike_result.pre_hike_price:.2f} e ainda não recuou do topo"
+                ),
+                pre_hike_price=hike_result.pre_hike_price,
+                hike_pct=hike_result.pct_increase,
+                hike_days=hike_result.hike_days,
+                baseline_price=baseline_price,
+                peak_price=peak,
+            )
         discount_vs_prehike = (
             (baseline_price - current_price) / baseline_price
             if baseline_price > 0 else Decimal(0)
@@ -122,6 +148,7 @@ def compute_verdict(
                 hike_pct=hike_result.pct_increase,
                 hike_days=hike_result.hike_days,
                 baseline_price=baseline_price,
+                peak_price=peak,
             )
 
         pre_hike_price = hike_result.pre_hike_price
@@ -186,7 +213,8 @@ def compute_verdict(
 class _HikeDetection:
     pre_hike_price: Decimal
     pct_increase: Decimal
-    hike_days: int
+    hike_days: int  # 0 = começou há menos de 24h
+    peak_price: Decimal
 
 
 def _detect_hike(
@@ -214,11 +242,12 @@ def _detect_hike(
                 p for p in in_window if p.price > pre_hike_price * Decimal("1.02")
             ] or [p for p in in_window if p.price == peak_in_window]
             first_elevated = min(p.collected_at for p in elevated)
-            hike_days = max((now - first_elevated).days, 1)
+            hike_days = max((now - first_elevated).days, 0)
             return _HikeDetection(
                 pre_hike_price=pre_hike_price,
                 pct_increase=pct_increase,
                 hike_days=hike_days,
+                peak_price=peak_in_window,
             )
 
     return None

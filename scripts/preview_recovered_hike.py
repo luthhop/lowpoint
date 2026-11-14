@@ -37,7 +37,7 @@ def main():
             verdict=v.verdict, reason=v.reason, lowest_price=v.lowest_price,
             median_30d=v.median_30d, monitoring_days=v.monitoring_days,
             pre_hike_price=v.pre_hike_price, hike_pct=v.hike_pct,
-            hike_days=v.hike_days, baseline_price=v.baseline_price,
+            hike_days=v.hike_days, peak_price=v.peak_price, baseline_price=v.baseline_price,
             has_warranty=True, is_official=True, suspect_count=0,
         )
         msg = format_alert(ctx)

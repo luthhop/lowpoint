@@ -184,6 +184,7 @@ def _process_watch(
         pre_hike_price=verdict.pre_hike_price,
         hike_pct=verdict.hike_pct,
         hike_days=verdict.hike_days,
+        peak_price=verdict.peak_price,
         baseline_price=verdict.baseline_price,
         has_warranty=_has_warranty(best.offer.warranty),
         is_official=best.offer.official_store_id is not None,

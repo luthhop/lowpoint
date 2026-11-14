@@ -8,6 +8,9 @@ REAL_DISCOUNT_THRESHOLD = Decimal("0.05")
 HIKE_THRESHOLD = Decimal("0.10")
 INFLATED_ORIGINAL_THRESHOLD = Decimal("1.10")
 FACHADA_THRESHOLD = Decimal("0.03")
+# Com pico detectado, SEGURA só depois que o preço recua pelo menos isto do
+# máximo da janela. Antes disso (subindo ou perto do topo) é neutro.
+HIKE_RETREAT_THRESHOLD = Decimal("0.05")
 
 # Watches por chat. Silenciosos (produtos de análise) têm teto próprio e não
 # ocupam vaga do limite normal do /adicionar.
