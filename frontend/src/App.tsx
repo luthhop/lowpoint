@@ -5,6 +5,7 @@ import { discountPercent, formatPrice } from './lib/price-curve.mjs';
 import demo from './data/demo-history.json';
 
 const REPOSITORY = 'https://github.com/luthhop/lowpoint';
+const BOT_INVITE = 'https://t.me/lowpointbr_bot?start=beta';
 const realPrice = demo.points.at(-1)!.priceCents;
 const facadePrice = demo.points.at(-2)!.priceCents;
 const realDiscount = discountPercent(realPrice, demo.baselineCents);
@@ -15,6 +16,10 @@ function Wordmark() {
 
 function GithubLink({ children = 'GitHub', className = '' }: { children?: ReactNode; className?: string }) {
   return <a className={className} href={REPOSITORY} target="_blank" rel="noopener noreferrer">{children}<span className="link-arrow" aria-hidden="true">↗</span><span className="sr-only"> (abre em nova aba)</span></a>;
+}
+
+function InviteLink({ children = 'Quero testar', className = '' }: { children?: ReactNode; className?: string }) {
+  return <a className={className} href={BOT_INVITE} target="_blank" rel="noopener noreferrer">{children}<span className="link-arrow" aria-hidden="true">↗</span><span className="sr-only"> (abre o bot no Telegram em nova aba)</span></a>;
 }
 
 function ScrollLink({ children, to, className = '' }: { children: ReactNode; to: string; className?: string }) {
@@ -30,11 +35,10 @@ function PriceEvidence() {
     <div className="evidence-dossier mono"><span>Dossiê 001 — PS5 Digital</span><span>Exemplo ilustrativo</span></div>
     <div className="offer-tag">
       <div className="tag-top mono"><span>Black Friday</span><span>Oferta</span></div>
-      <p className="tag-discount">−40%</p>
+      <p className="tag-discount"><span className="discount-ring">−40%<svg className="investigation-mark" viewBox="0 0 430 175" preserveAspectRatio="none" fill="none" aria-hidden="true"><path vectorEffect="non-scaling-stroke" d="M25 153C12 101 68 42 187 32C306 19 405 47 405 94C405 146 290 164 182 158C91 156 36 133 39 100" /></svg></span></p>
       <p className="tag-price mono">{formatPrice(facadePrice, true)}</p>
       <p className="tag-original mono">Preço riscado: <del>{formatPrice(demo.crossedOutCents, true)}</del></p>
     </div>
-    <svg className="investigation-mark" viewBox="0 0 430 175" fill="none" aria-hidden="true"><path d="M25 153C12 101 68 42 187 32C306 19 405 47 405 94C405 146 290 164 182 158C91 156 36 133 39 100" /></svg>
     <div className="evidence-receipt">
       <div className="receipt-heading mono"><span>O histórico conta outra história</span><span>Ago → Nov</span></div>
       <PriceChart small />
@@ -54,7 +58,7 @@ function Hero() {
       </div>
       <PriceEvidence />
       <div className="hero-actions" data-reveal>
-        <div className="action-row"><ScrollLink to="historia">Ver a história desse preço</ScrollLink><GithubLink className="text-link">O projeto</GithubLink></div>
+        <div className="action-row"><GithubLink className="button">Ver o código</GithubLink><InviteLink className="text-link invite-link">Quero testar</InviteLink></div>
         <p className="hero-motto mono">Sem gritaria. Sem “corre!”. Com dados.</p>
         <p className="mobile-copy hero-caption mono">Exemplo ilustrativo · preços fictícios<br />Mercado Livre · Telegram · código aberto</p>
       </div>
@@ -98,7 +102,7 @@ function Resolution() {
 function AlertPreview() {
   return <section id="alerta" className="alert-section dark" aria-labelledby="alert-title">
     <div className="container alert-layout"><div className="alert-intro" data-reveal><p className="eyebrow">Do histórico para o teu Telegram</p><h2 id="alert-title">O veredito chega.<br />A decisão é tua.</h2><p>Você escolhe o produto e quanto quer pagar.<br />O Lowpoint acompanha o preço e confere a história.</p></div>
-      <article className="alert-preview" data-reveal aria-label="Trecho ilustrativo de um alerta do Lowpoint"><header><strong>Pode ir</strong><span className="mono">Lowpoint / Telegram</span></header><p className="alert-product mono"><span className="desktop-copy">PS5 Digital</span><span className="mobile-copy">PS5</span> · {formatPrice(realPrice, true)}</p><p>Bateu teu alvo de {formatPrice(demo.targetCents, true)}.<br />Menor preço desde que começamos a monitorar, {realDiscount}% abaixo do normal.</p><p className="alert-disclaimer mono">Trecho do alerta · exemplo com preços fictícios</p></article>
+      <article className="alert-preview" data-reveal aria-label="Trecho ilustrativo de um alerta do Lowpoint"><header><strong>Pode ir</strong><span className="mono">Lowpoint / Telegram</span></header><p className="alert-product mono"><span className="desktop-copy">PS5 Digital</span><span className="mobile-copy">PS5</span> · {formatPrice(realPrice, true)}</p><p>Bateu teu alvo de {formatPrice(demo.targetCents, true)}. Esse é de verdade. Pode ir.<br />Menor preço desde que começamos a monitorar. Mesmo depois de subirem antes, tá {realDiscount}% abaixo do normal.</p><p className="alert-disclaimer mono">Trecho do alerta · exemplo com preços fictícios</p></article>
     </div>
   </section>;
 }
@@ -113,7 +117,7 @@ function HowItWorks() {
   return <section id="como-funciona" className="how section-pad" aria-labelledby="how-title"><div className="container">
     <div className="section-heading"><SectionTitle eyebrow="Como funciona"><span id="how-title">Você escolhe.<br />A gente fica de olho.</span></SectionTitle><p className="section-aside" data-reveal>Um produto que você quer.<br />Um preço que faz sentido pra você.<br />O histórico ajuda a decidir.</p></div>
     <div className="how-layout"><ol className="steps">{steps.map(([title, text], i) => <li key={title} data-reveal><span className="step-number mono" aria-hidden="true">0{i + 1}</span><div><h3>{title}</h3><p>{text}</p></div></li>)}</ol>
-      <aside className="command-demo" data-reveal aria-label="Exemplo de como adicionar um produto"><p className="eyebrow">Exemplo de comando / Telegram</p><div className="command"><span className="mono">Você</span><code>/adicionar<br />mercadolivre.com.br/p/MLB57081243<br />3300 PS5</code></div><h3>Produto escolhido.<br />Alvo definido.</h3><p>Você acompanha a tua lista.<br />O Lowpoint acompanha os preços.</p><p className="demo-note mono">Demonstração ilustrativa.<br />O bot ainda está em teste pessoal.</p></aside>
+      <aside className="command-demo" data-reveal aria-label="Exemplo de como adicionar um produto"><p className="eyebrow">Exemplo de comando / Telegram</p><div className="command"><span className="mono">Você</span><code>/adicionar<br />mercadolivre.com.br/p/MLB57081243<br />3300 PS5</code></div><h3>Produto escolhido.<br />Alvo definido.</h3><p>Você acompanha a tua lista.<br />O Lowpoint acompanha os preços.</p><p className="demo-note mono">Demonstração ilustrativa.<br />O bot está em beta por convite.</p><div className="action-row demo-actions"><InviteLink className="button">Quero testar</InviteLink><GithubLink className="text-link">Ver o código</GithubLink></div></aside>
     </div>
   </div></section>;
 }
@@ -131,27 +135,28 @@ function Verdicts() {
 }
 
 const questions = [
-  ['Já posso usar o bot?', 'Por enquanto, o Lowpoint está em teste pessoal, com acesso restrito. Você pode acompanhar o desenvolvimento e o código no GitHub.'],
+  ['Preciso criar conta?', 'Não. O Lowpoint está em beta por convite: toca em “Quero testar”, o bot abre no Telegram e teu pedido chega pra gente. A abertura geral fica para a próxima fase.'],
+  ['Já posso usar o bot?', 'O Lowpoint está em beta por convite, com vagas liberadas aos poucos. Toca em “Quero testar” pra pedir a tua. O código está aberto no GitHub.'],
   ['Funciona com qualquer link do Mercado Livre?', 'Nesta versão, usamos links de produtos de catálogo: aqueles com /p/MLB no endereço. Links de anúncios individuais ainda não são aceitos.'],
-  ['Quando chega um alerta?', 'As coletas são programadas a cada hora. O bot confere o alvo e o histórico antes de avisar. O mesmo tipo de alerta só é reenviado se o preço cair abaixo do último aviso.'],
+  ['Quando chega um alerta?', 'As coletas são programadas a cada hora (na Black Friday, a cada 15 minutos). Você recebe um aviso quando o veredito muda. Se o veredito se repetir, o bot só avisa de novo quando o preço cair mais 3%, e um “Segura” repetido chega no máximo 1 vez por dia. Nunca passa de 1 aviso por hora por produto.'],
   ['E se ainda não houver histórico?', 'Antes de completar sete dias de monitoramento, o bot pode avisar que o alvo foi atingido, mas não afirma que encontrou um desconto real.'],
   ['Como trata ofertas suspeitas?', 'O Lowpoint compara os preços para filtrar ofertas muito abaixo do padrão e informa quando alguma foi ignorada. Vale conferir o vendedor e as condições da oferta.'],
   ['Você ganha comissão se eu comprar?', 'Hoje não há links de afiliado. A regra do projeto é que uma comissão nunca influencie o veredito.'],
 ];
 
 function FAQ() {
-  return <section id="perguntas" className="faq section-pad" aria-labelledby="faq-title"><div className="container faq-layout"><div className="faq-intro" data-reveal><SectionTitle eyebrow="Perguntas frequentes"><span id="faq-title">Perguntas<br />sem rodeio.</span></SectionTitle><p>Tudo que você precisa saber<br />sobre esta versão do Lowpoint.</p><p className="eyebrow">Fase atual / teste pessoal</p></div><div className="faq-items">{questions.map(([q, a], i) => <details key={q} name="lowpoint-faq" open={i === 0 || undefined} data-reveal><summary>{q}<span className="faq-symbol" aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></div></section>;
+  return <section id="perguntas" className="faq section-pad" aria-labelledby="faq-title"><div className="container faq-layout"><div className="faq-intro" data-reveal><SectionTitle eyebrow="Perguntas frequentes"><span id="faq-title">Perguntas<br />sem rodeio.</span></SectionTitle><p>Tudo que você precisa saber<br />sobre esta versão do Lowpoint.</p><p className="eyebrow">Fase atual / beta por convite</p></div><div className="faq-items">{questions.map(([q, a], i) => <details key={q} name="lowpoint-faq" open={i === 0 || undefined} data-reveal><summary>{q}<span className="faq-symbol" aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></div></section>;
 }
 
 function FinalCTA() {
-  return <section className="final-cta dark section-pad" aria-labelledby="cta-title"><div className="container"><p className="eyebrow" data-reveal>Código aberto / em desenvolvimento</p><h2 id="cta-title" data-reveal>Antes de comprar,<br />confere a história.</h2><div className="cta-bottom" data-reveal><p>O Lowpoint está em desenvolvimento.<br />Acompanhe o código, as decisões e a evolução do projeto.</p><GithubLink className="button button--light">Acompanhar no GitHub</GithubLink></div></div></section>;
+  return <section className="final-cta dark section-pad" aria-labelledby="cta-title"><div className="container"><p className="eyebrow" data-reveal>Código aberto / em desenvolvimento</p><h2 id="cta-title" data-reveal>Antes de comprar,<br />confere a história.</h2><div className="cta-bottom" data-reveal><p>O Lowpoint está em desenvolvimento.<br />Acompanhe o código, as decisões e a evolução do projeto.</p><div className="action-row"><GithubLink className="button button--light">Ver o código</GithubLink><InviteLink className="text-link">Quero testar</InviteLink></div></div></div></section>;
 }
 
 export default function App() {
   useRevealMotion();
   return <>
     <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
-    <header id="inicio" className="site-header"><div className="container header-inner"><a href="#inicio" aria-label="Lowpoint, início"><Wordmark /></a><nav aria-label="Navegação principal"><a href="#como-funciona">Como funciona</a><a href="#vereditos">Os vereditos</a><a href="#perguntas">Perguntas</a><GithubLink /></nav></div></header>
+    <header id="inicio" className="site-header"><div className="container header-inner"><a href="#inicio" aria-label="Lowpoint, início"><Wordmark /></a><nav aria-label="Navegação principal"><a href="#como-funciona">Como funciona</a><a href="#vereditos">Os vereditos</a><a href="#perguntas">Perguntas</a><InviteLink className="nav-invite">Quero testar</InviteLink><GithubLink>Ver o código</GithubLink></nav></div></header>
     <main id="conteudo" tabIndex={-1}><Hero /><Timeline /><Resolution /><AlertPreview /><HowItWorks /><Verdicts /><FAQ /><FinalCTA /></main>
     <footer className="site-footer dark"><div className="container footer-inner"><a href="#inicio" aria-label="Voltar ao início"><Wordmark /></a><span className="mono">Acompanhe o desenvolvimento</span><GithubLink className="mono" /></div></footer>
   </>;

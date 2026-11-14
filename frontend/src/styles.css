@@ -71,7 +71,10 @@ a:hover .link-arrow{transform:translate(2px,-2px)}
 .tag-discount{font-family:var(--display);font-weight:900;font-size:104px;line-height:104px;letter-spacing:-.055em}
 .tag-price{font-size:24px;line-height:30px;font-weight:700}
 .tag-original{font-size:12px;line-height:16px;text-transform:uppercase}
-.investigation-mark{position:absolute;top:70px;left:76px;width:430px;height:175px;transform:rotate(7deg);pointer-events:none}
+/* A elipse fica presa ao "−40%" (não à cena): acompanha o texto em qualquer largura e nunca alcança o preço. */
+.discount-ring{position:relative;display:inline-block}
+.investigation-mark{position:absolute;left:-.644em;top:-.416em;width:4.267em;height:1.669em;overflow:visible;pointer-events:none}
+.tag-discount{margin-block:.1em .16em}
 .investigation-mark path{stroke:var(--ochre);stroke-width:4;stroke-linecap:round;stroke-dasharray:1200;stroke-dashoffset:0;animation:mark-arrive 1s .45s ease both}
 .evidence-receipt{position:absolute;top:350px;left:0;width:570px;max-width:100%;padding:22px 26px;background:var(--paper);border-top:2px solid var(--ink);display:flex;flex-direction:column;gap:14px;transform:rotate(-3deg)}
 .receipt-heading{display:flex;justify-content:space-between;gap:14px;text-transform:uppercase;font-size:11px;line-height:14px}
@@ -178,6 +181,7 @@ a:hover .link-arrow{transform:translate(2px,-2px)}
 .final-cta h2{font-size:59px;line-height:60px}
 .cta-bottom{display:flex;align-items:center;justify-content:space-between;gap:40px}
 .cta-bottom p{font-size:17px;line-height:27px;max-width:620px}
+.demo-actions{margin-top:24px;flex-wrap:wrap}
 .site-footer{border-top:1px solid #444}
 .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:30px;min-height:87px;padding-block:24px}
 .site-footer .wordmark{font-size:24px}
@@ -223,6 +227,7 @@ html[data-motion='ready'] [data-reveal]:not(.is-visible){opacity:0;transform:tra
   .header-inner{min-height:74px}
   .header-inner nav{gap:24px;font-size:11px}
   .header-inner nav a:not(:last-child){display:none}
+  .header-inner nav a.nav-invite{display:inline}
   .wordmark{font-size:24px}
   .hero-inner{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:'copy' 'evidence' 'actions';gap:24px;min-height:0;max-width:650px;padding-top:28px;padding-bottom:24px}
   .hero-copy{gap:18px}
@@ -231,12 +236,12 @@ html[data-motion='ready'] [data-reveal]:not(.is-visible){opacity:0;transform:tra
   .hero-description{font-size:17px;line-height:26px}
   .hero-actions{padding:0;gap:16px}
   .hero-motto,.hero-actions .text-link{display:none}
+  .hero-actions .invite-link{display:inline}
   .hero-strip{display:none}
   .hero-caption{font-size:10px;line-height:17px;text-transform:uppercase}
   .evidence-scene{width:100%;height:620px}
   .evidence-dossier{display:none}
   .offer-tag{left:15%;top:36px}
-  .investigation-mark{left:10%;top:48px}
   .evidence-receipt{left:0;top:330px}
   .verdict-stamp{top:520px;right:0}
   .section-pad{padding-block:48px}
@@ -290,6 +295,7 @@ html[data-motion='ready'] [data-reveal]:not(.is-visible){opacity:0;transform:tra
   .mobile-copy{display:initial}
   .header-inner{min-height:64px}
   .header-inner nav{font-size:11px}
+  .header-inner nav a.nav-invite{display:none}
   .hero-inner{gap:20px;padding-top:24px;padding-bottom:20px}
   .hero-copy{gap:16px}
   .hero-copy .eyebrow{font-size:10px}
@@ -307,7 +313,6 @@ html[data-motion='ready'] [data-reveal]:not(.is-visible){opacity:0;transform:tra
   .tag-discount{font-size:67px;line-height:67px}
   .tag-price{font-size:19px;line-height:24px}
   .tag-original{font-size:9px;line-height:12px}
-  .investigation-mark{top:27px;left:17%;width:67%;height:112px}
   .investigation-mark path{stroke-width:3}
   .evidence-receipt{top:185px;left:24px;width:calc(100% - 48px);padding:14px 18px;border-top-width:1px;gap:12px}
   .receipt-heading{display:none}
