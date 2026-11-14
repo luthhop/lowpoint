@@ -4,6 +4,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from statistics import median as _median
 
+from lowpoint.config import MAX_WATCHES_PER_CHAT
 from lowpoint.db import SessionLocal
 from lowpoint.models import PriceHistory, Product, Watch
 from lowpoint.register import extract_catalog_id, register_product
@@ -17,7 +18,7 @@ from lowpoint.telegram.security import (
 
 log = logging.getLogger("lowpoint.webhook")
 
-_MAX_WATCHES_PER_CHAT = 20
+_MAX_WATCHES_PER_CHAT = MAX_WATCHES_PER_CHAT  # conta só watches não silenciosos
 
 
 def handle_update(update: dict, secret_header: str | None) -> dict:
@@ -102,7 +103,11 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
     try:
         count = (
             session.query(Watch)
-            .filter(Watch.chat_id == chat_id, Watch.active.is_(True))
+            .filter(
+                Watch.chat_id == chat_id,
+                Watch.active.is_(True),
+                Watch.silent.is_(False),
+            )
             .count()
         )
         if count >= _MAX_WATCHES_PER_CHAT:
@@ -202,17 +207,19 @@ def _fetch_live_price(catalog_id: str, product: Product) -> dict:
 def _cmd_lista(chat_id: int) -> dict:
     session = SessionLocal()
     try:
-        watches = (
+        active = (
             session.query(Watch)
             .join(Product)
             .filter(Watch.chat_id == chat_id, Watch.active.is_(True))
             .order_by(Watch.created_at)
             .all()
         )
-        if not watches:
+        if not active:
             return _reply(chat_id, "Nenhum produto monitorado. Usa /adicionar pra começar.")
+        watches = [w for w in active if not w.silent]
+        silent_count = len(active) - len(watches)
 
-        lines = ["Teus produtos:\n"]
+        lines = ["Teus produtos:\n"] if watches else []
         for i, w in enumerate(watches, 1):
             name = w.nickname or w.product.title
             target = fmt_brl(Decimal(str(w.target_price)))
@@ -240,7 +247,10 @@ def _cmd_lista(chat_id: int) -> dict:
                 f"   Monitorando {since}"
             )
 
-        return _reply(chat_id, "\n".join(lines))
+        if silent_count:
+            lines.append(f"\n+{silent_count} em análise (silenciosos)")
+
+        return _reply(chat_id, "\n".join(lines).strip())
     finally:
         session.close()
 

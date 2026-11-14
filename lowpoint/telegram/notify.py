@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import requests
 
+from lowpoint.antispam import Decision, should_send
 from lowpoint.best_offer import BestOfferResult, _has_warranty
 from lowpoint.db import SessionLocal
 from lowpoint.models import Alert, PriceHistory, Product, Watch
@@ -45,17 +46,15 @@ def _send_message(
 
 
 def _should_alert(
-    session, watch_id: int, alert_type: str, current_price: Decimal
-) -> bool:
+    session, watch_id: int, alert_type: str, current_price: Decimal, now: datetime
+) -> Decision:
     last = (
         session.query(Alert)
-        .filter(Alert.watch_id == watch_id, Alert.alert_type == alert_type)
-        .order_by(Alert.sent_at.desc())
+        .filter(Alert.watch_id == watch_id)
+        .order_by(Alert.sent_at.desc(), Alert.id.desc())
         .first()
     )
-    if last is None:
-        return True
-    return current_price < last.price_at_alert
+    return should_send(alert_type, current_price, now, last)
 
 
 def _build_history(session, product_id: int) -> list[PricePoint]:
@@ -69,15 +68,25 @@ def _build_history(session, product_id: int) -> list[PricePoint]:
         PricePoint(
             price=Decimal(str(r.price)),
             original_price=Decimal(str(r.original_price)) if r.original_price else None,
-            collected_at=r.collected_at,
+            # SQLite (testes) devolve sem fuso; Postgres já vem com fuso.
+            collected_at=(
+                r.collected_at if r.collected_at.tzinfo
+                else r.collected_at.replace(tzinfo=timezone.utc)
+            ),
         )
         for r in rows
     ]
 
 
 def send_alerts_after_collect(
-    best: BestOfferResult, product: Product, *, offer_count: int = 0,
+    best: BestOfferResult,
+    product: Product,
+    *,
+    offer_count: int = 0,
+    now: datetime | None = None,
 ) -> None:
+    if now is None:
+        now = datetime.now(timezone.utc)
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not bot_token:
         log.info("TELEGRAM_BOT_TOKEN ausente. Alertas desligados.")
@@ -87,11 +96,15 @@ def send_alerts_after_collect(
     try:
         watches = (
             session.query(Watch)
-            .filter(Watch.product_id == product.id, Watch.active.is_(True))
+            .filter(
+                Watch.product_id == product.id,
+                Watch.active.is_(True),
+                Watch.silent.is_(False),
+            )
             .all()
         )
         if not watches:
-            log.info("Nenhum watch ativo para %s.", product.catalog_product_id)
+            log.info("Nenhum watch ativo não silencioso para %s.", product.catalog_product_id)
             return
 
         history = _build_history(session, product.id)
@@ -102,7 +115,7 @@ def send_alerts_after_collect(
             else None
         )
 
-        verdict = compute_verdict(price, original_price, history)
+        verdict = compute_verdict(price, original_price, history, now)
 
         if verdict.verdict == "neutro":
             watches = [
@@ -123,7 +136,7 @@ def send_alerts_after_collect(
         for watch in watches:
             _process_watch(
                 session, bot_token, watch, product, best, verdict, price, original_price,
-                offer_count=offer_count,
+                offer_count=offer_count, now=now,
             )
 
         session.commit()
@@ -145,7 +158,10 @@ def _process_watch(
     original_price: Decimal | None,
     *,
     offer_count: int = 0,
+    now: datetime,
 ) -> None:
+    if watch.silent:  # defesa extra: silencioso nunca alerta
+        return
     name = watch.nickname or product.title
     target = Decimal(str(watch.target_price))
 
@@ -178,10 +194,11 @@ def _process_watch(
 
     msg = format_alert(ctx)
 
-    if not _should_alert(session, watch.id, msg.alert_type, price):
+    decision = _should_alert(session, watch.id, msg.alert_type, price, now)
+    if not decision.send:
         log.info(
-            "Alerta %s suprimido para watch %d (preço não caiu)",
-            msg.alert_type, watch.id,
+            "Alerta %s suprimido para watch %d (%s)",
+            msg.alert_type, watch.id, decision.reason,
         )
         return
 
@@ -192,8 +209,10 @@ def _process_watch(
                 alert_type=msg.alert_type,
                 verdict=verdict.verdict,
                 price_at_alert=price,
+                sent_at=now,
             )
         )
+        session.flush()  # o próximo watch/coleta já enxerga este alerta
         log.info(
             "Alerta %s enviado para chat %d (watch %d, R$ %s)",
             msg.alert_type, watch.chat_id, watch.id, price,

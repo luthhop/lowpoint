@@ -307,3 +307,69 @@ class TestListaPlural:
             result = handle_update(_update("/lista"), "test-secret")
 
         assert "10 dias" in result["text"]
+
+
+def _seed_many(session, n: int, *, silent: bool, chat_id: int = 100, start: int = 0):
+    for i in range(start, start + n):
+        p = Product(catalog_product_id=f"MLB9{i:05d}", title=f"Produto {i}",
+                    url=f"https://www.mercadolivre.com.br/p/MLB9{i:05d}")
+        session.add(p)
+        session.flush()
+        session.add(Watch(chat_id=chat_id, product_id=p.id,
+                          target_price=Decimal("10"), silent=silent))
+    session.commit()
+
+
+class TestLimiteSilenciosos:
+    def _adicionar(self, db_session):
+        with (
+            patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session),
+            patch("lowpoint.register.SessionLocal", return_value=db_session),
+            patch("lowpoint.telegram.webhook._fetch_live_price", return_value={}),
+        ):
+            return handle_update(
+                _update("/adicionar mercadolivre.com.br/p/MLB11112222 100"), "test-secret"
+            )
+
+    def test_silent_watches_do_not_count_toward_20(self, db_session):
+        _seed_many(db_session, 3, silent=False)
+        _seed_many(db_session, 17, silent=True, start=100)
+        result = self._adicionar(db_session)
+        assert "Limite" not in result["text"]
+        assert "Pronto" in result["text"]
+
+    def test_20_normal_watches_still_block(self, db_session):
+        _seed_many(db_session, 20, silent=False)
+        _seed_many(db_session, 5, silent=True, start=100)
+        result = self._adicionar(db_session)
+        assert "Limite de 20 produtos atingido" in result["text"]
+
+    def test_constants(self):
+        from lowpoint.config import MAX_SILENT_WATCHES_PER_CHAT, MAX_WATCHES_PER_CHAT
+        assert MAX_WATCHES_PER_CHAT == 20
+        assert MAX_SILENT_WATCHES_PER_CHAT == 40
+
+
+class TestListaSilenciosos:
+    def _lista(self, db_session):
+        with patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session):
+            return handle_update(_update("/lista"), "test-secret")["text"]
+
+    def test_lists_normal_and_counts_silent_at_end(self, db_session):
+        _seed_many(db_session, 3, silent=False)
+        _seed_many(db_session, 17, silent=True, start=100)
+        text = self._lista(db_session)
+        assert "Produto 0" in text and "Produto 2" in text
+        assert "Produto 100" not in text
+        assert text.rstrip().endswith("+17 em análise (silenciosos)")
+        assert "4." not in text
+
+    def test_no_silent_line_when_none(self, db_session):
+        _seed_many(db_session, 2, silent=False)
+        assert "em análise" not in self._lista(db_session)
+
+    def test_only_silent(self, db_session):
+        _seed_many(db_session, 17, silent=True, start=100)
+        text = self._lista(db_session)
+        assert "+17 em análise (silenciosos)" in text
+        assert "Produto 100" not in text
