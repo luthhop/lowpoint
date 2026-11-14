@@ -13,7 +13,7 @@
 ## Design e landing
 - Landing publicada: https://lowpoint-web.vercel.app; projeto lowpoint-web, raiz frontend
 - Lucas quer animações com mais impacto — ritmo etiqueta → histórico → SEGURA → desconto real → alerta
-- Web = vitrine ao vivo (só leitura) + beta por convite; CTAs "Ver o código"/"Quero testar"; wireframe v11, falta destino do convite
+- Web = vitrine + beta por convite. No main (15/11): CTAs "Ver o código"/"Quero testar" (t.me/lowpointbr_bot?start=beta), PODE IR novo, FAQ (conta, alertas, beta), elipse presa ao −40%; bot com pedido de convite
 ## Próximo
-- PRÓXIMO: vigiar coletas e alertas na BF (audit_collections.py); App.tsx com a linha antiga do PODE IR
+- PRÓXIMO: conferir deploy da landing e do webhook; divergências restantes em memoria/design/landing-divergencias-v11.md
 - Decidir sobre reativar LG 32" (watch 1, inativo desde 09/11; agora cabe, 3/20); animações; dashboard pós-BF

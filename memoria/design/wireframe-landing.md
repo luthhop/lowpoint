@@ -86,7 +86,7 @@ O LOWPOINT TE DIZ SE ELA É DE VERDADE."
 **Subtítulo** (Libre Franklin 400, 18px): "Veja ao vivo os produtos que o Lowpoint está vigiando e o veredito de cada preço. O bot no Telegram está em beta fechado, por convite." (proposto)
 
 **CTA principal**: "Ver o código" (botão Ink, leva ao GitHub)
-**CTA secundário**: "Quero testar" (texto-link/botão outline; pedido de convite pro beta. Destino: [pendente — canal do convite])
+**CTA secundário**: "Quero testar" (texto-link/botão outline; pedido de convite pro beta. Destino: https://t.me/lowpointbr_bot?start=beta)
 **Link terciário**: texto-link Muted: "Ver como funciona"
 **Reforço**: "Grátis · código aberto · beta por convite" (proposto)
 **Chips** (3 pills, borda Ink 1px, radius 0, Plex Mono 500 12px): "Telegram" · "Dados públicos do ML" · "Código aberto"
