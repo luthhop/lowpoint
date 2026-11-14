@@ -77,6 +77,6 @@ class TestIsChatAllowed:
 
 
 class TestUnauthorizedMessage:
-    def test_message_is_polite(self):
-        assert "pessoal" in UNAUTHORIZED_MESSAGE
-        assert "testes" in UNAUTHORIZED_MESSAGE
+    def test_message_points_to_invite(self):
+        assert "beta fechado" in UNAUTHORIZED_MESSAGE
+        assert "/start" in UNAUTHORIZED_MESSAGE

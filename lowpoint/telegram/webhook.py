@@ -9,9 +9,9 @@ from lowpoint.db import SessionLocal
 from lowpoint.models import PriceHistory, Product, Watch
 from lowpoint.register import extract_catalog_id, register_product
 from lowpoint.best_offer import select_best_offer
+from lowpoint.telegram.beta import handle_outsider
 from lowpoint.telegram.formatter import _dias, fmt_brl
 from lowpoint.telegram.security import (
-    UNAUTHORIZED_MESSAGE,
     is_chat_allowed,
     validate_secret_token,
 )
@@ -40,7 +40,8 @@ def handle_update(update: dict, secret_header: str | None) -> dict:
         return {"statusCode": 200}
 
     if not is_chat_allowed(chat_id):
-        return _reply(chat_id, UNAUTHORIZED_MESSAGE)
+        sender = message.get("from") or {}
+        return _reply(chat_id, handle_outsider(chat_id, text, sender))
 
     if text.startswith("/adicionar"):
         return _cmd_adicionar(chat_id, text)

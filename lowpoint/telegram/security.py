@@ -21,4 +21,4 @@ def is_chat_allowed(chat_id: int) -> bool:
     return chat_id in allowed
 
 
-UNAUTHORIZED_MESSAGE = "Esse bot é pessoal e está em fase de testes."
+UNAUTHORIZED_MESSAGE = "O Lowpoint tá em beta fechado. Manda /start pra pedir convite."
