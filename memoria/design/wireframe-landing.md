@@ -1,7 +1,8 @@
-# Wireframe — Landing Page Lowpoint (v9)
+# Wireframe — Landing Page Lowpoint (v10)
 
 > Validado contra o código corrigido em `lowpoint/verdict.py` e `lowpoint/telegram/formatter.py`.
 > Teste: `tests/test_landing_story.py` — 53 passed, 0 failed (total: 250).
+> Mudanças v10 (2026-11-14): modelo da web decidido — vitrine com dados ao vivo (painel só leitura dos produtos monitorados) + beta por convite via allowlist; abertura geral na Fase 2. CTA principal "Ver o código", secundário "Quero testar". Subtítulo, reforços e resposta do FAQ são texto proposto (aguardam aprovação no Paper). Destino do "Quero testar" ainda em aberto.
 > Mudanças v9 (2026-11-10): PODE IR com pico junta os 7% numa linha só ("Mesmo depois de subirem antes, tá X% abaixo do normal"). Pendente: o trecho do PODE IR em `frontend/src/App.tsx` ainda usa a linha antiga.
 > Mudanças v8 (2026-11-10): SEGURA com pico usa template C — "O anúncio diz X% OFF (de R$ …)" e "Subiram X% em N dias", N contado do início do pico. Texto conferido por teste de igualdade exata.
 > Mudanças v7: recuperação >3% segue regra normal sobre baseline limpo; nota pós-pico no alerta. Validação: [cenários 4%, 10%, 20%](validacao-pos-pico.md).
@@ -66,7 +67,7 @@ Botão: "Ver oferta"
 ### HEADER (fixo, Ink #0A0A0A)
 - Logo "LOWPOINT." à esquerda (Archivo 900, ponto Forest)
 - Âncoras: "COMO FUNCIONA" · "VEREDITO" · "PERGUNTAS" (Plex Mono 500 uppercase)
-- CTA direita: [pendente decisão]
+- CTA direita: "Ver o código" (GitHub). Secundário só a partir do tablet: texto-link "Quero testar"
 
 ---
 
@@ -81,11 +82,12 @@ Botão: "Ver oferta"
 "OS OUTROS TE MOSTRAM A PROMOÇÃO.
 O LOWPOINT TE DIZ SE ELA É DE VERDADE."
 
-**Subtítulo** (Libre Franklin 400, 18px): [pendente decisão — depende de web aberta vs. vitrine]
+**Subtítulo** (Libre Franklin 400, 18px): "Veja ao vivo os produtos que o Lowpoint está vigiando e o veredito de cada preço. O bot no Telegram está em beta fechado, por convite." (proposto)
 
-**CTA principal**: [pendente decisão]
-**CTA secundário**: texto-link Muted: "Ver como funciona"
-**Reforço**: [pendente decisão — "Grátis · sem cadastro de cartão" depende do modelo]
+**CTA principal**: "Ver o código" (botão Ink, leva ao GitHub)
+**CTA secundário**: "Quero testar" (texto-link/botão outline; pedido de convite pro beta. Destino: [pendente — canal do convite])
+**Link terciário**: texto-link Muted: "Ver como funciona"
+**Reforço**: "Grátis · código aberto · beta por convite" (proposto)
 **Chips** (3 pills, borda Ink 1px, radius 0, Plex Mono 500 12px): "Telegram" · "Dados públicos do ML" · "Código aberto"
 
 **Animação**:
@@ -212,8 +214,8 @@ Texto EXATO do alerta gerado pelo código (ver seção acima).
 **03 — RECEBE O VEREDITO**
 "Quando o preço mudar, você recebe: pode ir, segura, ou monitorando. Com dados, não achismo."
 
-**CTA**: [pendente decisão]
-**Reforço**: [pendente decisão — "Leva 30 segundos" depende do modelo]
+**CTA**: "Quero testar" (principal nesta seção, porque o leitor acabou de ver o fluxo do bot) + texto-link "Ver o código"
+**Reforço**: "Beta por convite. Acesso liberado por allowlist." (proposto)
 
 **Animação**: barra avança por bloco; números fade-in + translateY(-20px). *Reduced-motion*: estático.
 **Mobile**: blocos empilhados, barra vertical à esquerda em vez de horizontal.
@@ -263,7 +265,8 @@ Se nenhum dos dois aciona e o preço caiu pelo menos 5% abaixo da mediana e é o
 **"É de graça?"**
 "Sim. Sem plano pago, sem freemium, sem pegadinha."
 
-**[Pergunta sobre conta/cadastro]**: [pendente decisão web aberta vs. vitrine]
+**"Preciso criar conta?"** (proposto)
+"Não. O site é uma vitrine: mostra ao vivo os produtos que o Lowpoint monitora, só leitura. O bot no Telegram está em beta por convite. Pede pelo 'Quero testar'. Abertura geral fica para a próxima fase."
 
 **"É legal coletar esses dados?"**
 "Usamos só a API oficial de catálogo do Mercado Livre (`/products/{id}/items`) e seguimos os Termos de Desenvolvedores. Sem scraping, sem dados privados. Código aberto no GitHub."
@@ -276,8 +279,8 @@ Se nenhum dos dois aciona e o preço caiu pelo menos 5% abaixo da mediana e é o
 "O PRÓXIMO DESCONTO VAI VIR.
 A PERGUNTA É SE ELE É DE VERDADE."
 
-**CTA**: [pendente decisão]
-**Reforço**: [pendente decisão]
+**CTA**: "Ver o código" (principal) · "Quero testar" (secundário)
+**Reforço**: "Ou só olha a vitrine: os preços ao vivo estão logo acima." (proposto)
 
 **Animação**: título fade-in. *Reduced-motion*: estático.
 
