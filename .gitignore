@@ -8,3 +8,6 @@ __pycache__/
 node_modules/
 dist/
 **/.obsidian/workspace*.json
+
+# Saída local da análise da BF (parquet, relatório, gráficos)
+analysis/output/

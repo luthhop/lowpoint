@@ -1,0 +1,6 @@
+# Só para a análise da BF (python -m analysis.report). NÃO entra no bot,
+# no coletor nem na Vercel, que instalam apenas requirements.txt.
+-r requirements.txt
+pandas>=3.0,<4.0
+pyarrow>=25.0,<26.0
+matplotlib>=3.11,<4.0
