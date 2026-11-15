@@ -119,4 +119,11 @@ Uma chamada READ ONLY a `/products/MLB28083897/items` (DualSense), HTTP 200, 32 
 
 ## Emendas
 
-Nenhuma até agora. Formato: `### Emenda N — dd/mm/aaaa` + o que mudou + motivo + se afeta alguma resposta já calculada.
+Formato: `### Emenda N — dd/mm/aaaa` + o que mudou + motivo + se afeta alguma resposta já calculada.
+
+### Emenda 1 — 15/11/2026
+
+- **O que mudou**: `offer_snapshots` passou a gravar `deal_ids` e `tags` de cada anúncio (seção "Dados exploratórios"). Commit da mudança: `7da404c` (migração `a6b7c8d9e0f1`, aplicada no Neon às 09:36).
+- **Primeira coleta com os campos**: 15/11/2026 09:45:29 BRT (20 produtos, 527 ofertas; deal_ids: 526 `[]` e 1 preenchido; tags preenchidas nas 527). As 22.296 linhas anteriores ficam com NULL.
+- **Motivo**: permitir análise exploratória de campanhas/deals na BF.
+- **Efeito**: **não altera P1–P5** (métricas, janelas, limiares, produtos e coletas usadas continuam as da v1).
