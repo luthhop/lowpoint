@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  formatPct, formatBRL, formatWhen, groupByCategory, sparkline, DOMAIN, BF_WINDOW, domainFor, pctLabel,
+  formatPct, formatBRL, formatWhen, groupByCategory, sparkline, DOMAIN, BF_WINDOW, domainFor, pctLabel, bfLabel,
 } from '../src/lib/painel.mjs';
 
 test('[TESTE] % vs referência sempre com sinal e palavra (sinal tipográfico, vírgula)', () => {
@@ -79,4 +79,23 @@ test('[TESTE] eixo a partir de 28/11 00:00 BRT: 14/11 → 08/12', () => {
   assert.deepEqual(domainFor(after), DOMAIN);
   const s = sparkline([['2026-11-15T12:00:00Z', '100.00']], '100.00', { width: 160, height: 40, now: after });
   assert.ok(s.bf.x + s.bf.width < 160 - 1, 'PÓS-BF aparece depois da faixa');
+});
+
+test('[TESTE] rótulo "BF" posicionado sobre a faixa da BF, nos dois eixos', () => {
+  for (const now of [Date.parse('2026-11-20T12:00:00Z'), Date.parse('2026-12-01T12:00:00Z')]) {
+    const s = sparkline([['2026-11-15T12:00:00Z', '100.00']], '100.00', { width: 160, height: 44, now });
+    const label = bfLabel(s.bf, 160);
+    assert.equal(label.text, 'BF');
+    assert.ok(Math.abs(parseFloat(label.left) - 100 * s.bf.x / 160) < 0.01);
+    assert.ok(Math.abs(parseFloat(label.width) - 100 * s.bf.width / 160) < 0.01);
+    assert.match(label.left, /%$/);
+  }
+});
+
+test('[TESTE] margem no topo: linha e referência nunca entram na área do rótulo "BF"', () => {
+  const s = sparkline([['2026-11-14T17:50:00Z', '100.00'], ['2026-11-15T12:00:00Z', '80.00']], '100.00',
+    { width: 160, height: 44, now: Date.parse('2026-11-20T12:00:00Z'), top: 12 });
+  assert.ok(s.refY >= 12, `refY=${s.refY}`);
+  const ys = [...s.path.matchAll(/(?:M[\d.]+ |V )([\d.]+)/g)].map(m => Number(m[1]));
+  assert.ok(ys.length >= 2 && ys.every(y => y >= 12 && y <= 44), ys.join(','));
 });

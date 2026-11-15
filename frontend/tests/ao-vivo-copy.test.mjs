@@ -40,3 +40,12 @@ test('[TESTE] landing: subtítulo e reforço novos, bloco-chamada para /ao-vivo'
   assert.ok((app.match(/href="\/ao-vivo\/"/g) ?? []).length >= 3, 'hero, bloco-chamada e CTA final');
   assert.ok(!app.includes('e o veredito de cada preço'), 'promessa de veredito ao vivo fora');
 });
+
+test('[TESTE] mini-gráfico tem o rótulo "BF" em Plex Mono ~9px, cor #666', () => {
+  assert.match(page, /className="live-spark-bf-label[^"]*"[^>]*>\{label\.text\}/);
+  const rule = css.match(/\.live-spark-bf-label\{([^}]*)\}/);
+  assert.ok(rule, 'regra .live-spark-bf-label');
+  assert.match(rule[1], /font-family:var\(--mono\)/);
+  assert.match(rule[1], /font-size:9px/);
+  assert.match(rule[1], /color:var\(--muted\)/);
+});

@@ -110,7 +110,7 @@ Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=3600
 2. **Uma linha de aviso, sempre visível:** "Sem veredito ao vivo: o detector de pico precisa de 14 dias de histórico, e o veredito oficial sai na análise de dezembro."
 3. **Grade de 20 cartões (small multiples)**, agrupados por categoria (título pequeno da categoria acima de cada grupo). Cada cartão tem:
    - nome (Libre Franklin 600) e link discreto "ver no ML";
-   - mini-gráfico em degraus (série de 3h), linha Ink, linha da Referência tracejada em Muted e a faixa da BF levemente marcada, **com o mesmo eixo de tempo em todos os cartões** (14/11 → 28/11 00:00 até a BF acabar; depois 14/11 → 08/12) e o eixo de preço próprio de cada produto;
+   - mini-gráfico em degraus (série de 3h), linha Ink, linha da Referência tracejada em Muted e a faixa da BF levemente marcada com o rótulo "BF" (Plex Mono 9px, #666, no topo; 12px reservados no alto da escala para nenhuma linha passar por cima), **com o mesmo eixo de tempo em todos os cartões** (14/11 → 28/11 00:00 até a BF acabar; depois 14/11 → 08/12) e o eixo de preço próprio de cada produto;
    - preço atual (Plex Mono 700);
    - "−7,2% vs referência" (Plex Mono 500), sempre com sinal e com palavra, não só cor;
    - até 17/11 14:50 (Referência parcial), "referência fecha em 17/11" no lugar do percentual;

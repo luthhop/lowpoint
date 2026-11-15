@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatBRL, formatWhen, groupByCategory, pctLabel, sparkline } from '../lib/painel.mjs';
+import { bfLabel, formatBRL, formatWhen, groupByCategory, pctLabel, sparkline } from '../lib/painel.mjs';
 
 // Contrato de GET /api/painel (memoria/design/painel-ao-vivo.md). Preços em string decimal.
 type Produto = {
@@ -22,7 +22,7 @@ const PAINEL_URL: string = import.meta.env.VITE_PAINEL_URL
 const REPOSITORY = 'https://github.com/luthhop/lowpoint';
 const PREREG_TAG = 'https://github.com/luthhop/lowpoint/blob/pre-registro-v1/memoria/analise/plano-pre-registro.md';
 const PREREG_EMENDAS = 'https://github.com/luthhop/lowpoint/blob/main/memoria/analise/plano-pre-registro.md#emendas';
-const W = 160, H = 44;
+const W = 160, H = 44, LABEL_TOP = 12;
 
 function Wordmark() {
   return <span className="wordmark">LOWPOINT<span className="wordmark-dot">.</span></span>;
@@ -33,13 +33,18 @@ function External({ href, children, className = '' }: { href: string; children: 
 }
 
 function Spark({ p, now }: { p: Produto; now: number }) {
-  const s = sparkline(p.serie, p.referencia, { width: W, height: H, now });
-  const label = p.referencia ? `Melhor oferta desde 14/11; referência ${formatBRL(p.referencia)}` : 'Melhor oferta desde 14/11';
-  return <svg className="live-spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={label}>
-    <rect className="live-spark-bf" x={s.bf.x} y={0} width={s.bf.width} height={H} />
-    {s.refY !== null && <line className="live-spark-ref" x1={0} x2={W} y1={s.refY} y2={s.refY} vectorEffect="non-scaling-stroke" />}
-    {s.path && <path className="live-spark-line" d={s.path} vectorEffect="non-scaling-stroke" />}
-  </svg>;
+  const s = sparkline(p.serie, p.referencia, { width: W, height: H, now, top: LABEL_TOP });
+  const label = bfLabel(s.bf, W);
+  const aria = (p.referencia ? `Melhor oferta desde 14/11; referência ${formatBRL(p.referencia)}` : 'Melhor oferta desde 14/11')
+    + '; faixa marcada: Black Friday, 23 a 27/11';
+  return <div className="live-spark-wrap">
+    <span className="live-spark-bf-label" aria-hidden="true" style={{ left: label.left, width: label.width }}>{label.text}</span>
+    <svg className="live-spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={aria}>
+      <rect className="live-spark-bf" x={s.bf.x} y={0} width={s.bf.width} height={H} />
+      {s.refY !== null && <line className="live-spark-ref" x1={0} x2={W} y1={s.refY} y2={s.refY} vectorEffect="non-scaling-stroke" />}
+      {s.path && <path className="live-spark-line" d={s.path} vectorEffect="non-scaling-stroke" />}
+    </svg>
+  </div>;
 }
 
 function Card({ p, referencia, now }: { p: Produto; referencia: Painel['referencia']; now: number }) {

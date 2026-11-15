@@ -59,7 +59,13 @@ export function groupByCategory(produtos) {
 
 const f = n => n.toFixed(1);
 
-export function sparkline(serie, ref, { width, height, now }) {
+// Rótulo "BF" em HTML sobre o SVG (o SVG estica com preserveAspectRatio="none";
+// texto dentro dele sairia deformado). Posição em % da largura do gráfico.
+export function bfLabel(bf, width) {
+  return { text: 'BF', left: `${(100 * bf.x / width).toFixed(3)}%`, width: `${(100 * bf.width / width).toFixed(3)}%` };
+}
+
+export function sparkline(serie, ref, { width, height, now, top = 0 }) {
   const d = domainFor(now);
   const span = d.end - d.start;
   const x = t => width * (t - d.start) / span;
@@ -70,7 +76,8 @@ export function sparkline(serie, ref, { width, height, now }) {
   let lo = Math.min(...values), hi = Math.max(...values);
   const pad = (hi - lo) * 0.15 || Math.max(hi * 0.02, 1);
   lo -= pad; hi += pad;
-  const y = v => height - (v - lo) / (hi - lo) * height;
+  // `top` reserva o alto do gráfico para o rótulo "BF": os dados ficam em [top, height].
+  const y = v => height - (v - lo) / (hi - lo) * (height - top);
   let path = `M${f(x(pts[0][0]))} ${f(y(pts[0][1]))}`;
   for (const [t, v] of pts.slice(1)) path += ` H ${f(x(t))} V ${f(y(v))}`;
   return { path, refY: ref ? y(Number(ref)) : null, bf };
