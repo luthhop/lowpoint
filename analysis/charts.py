@@ -5,7 +5,7 @@ Ink/Paper fazem o trabalho; Forest só para desconto real, Ochre só para
 """
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -80,13 +80,27 @@ def _brl(x, _pos=None) -> str:
     return "R$ " + txt.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+# Versão de publicação: só apresentação, nenhuma métrica depende disto.
+WINDOW_LABELS = {"B0": "B0", "PRE": "PRÉ-BF", "BF": "BF", "POS": "PÓS-BF"}
+WINDOW_ALPHA = {"B0": 0.06, "PRE": 0.06, "BF": 0.30, "POS": 0.06}
+
+
+def window_ticks() -> list[tuple[datetime, str]]:
+    """Ticks nas fronteiras das janelas. O fim é exclusivo (08/12 00:00), então
+    a última fronteira leva o rótulo do último dia incluído: 07/12."""
+    ticks = [(w.start, w.start.astimezone(prereg.BRT).strftime("%d/%m")) for w in prereg.WINDOWS]
+    last = prereg.CUTOFF - timedelta(days=1)
+    return ticks + [(prereg.CUTOFF, last.astimezone(prereg.BRT).strftime("%d/%m"))]
+
+
 def product_chart(path: Path, product: prereg.Product, obs, ref: Decimal | None,
                   ref_partial: bool, now: datetime, real_times=(), maquiagem_at=None) -> None:
     fig, ax = plt.subplots(figsize=(9, 3.6))
-    for i, w in enumerate(prereg.WINDOWS):
-        ax.axvspan(w.start, w.end, color=MUTED, alpha=0.18 if i % 2 == 0 else 0.07, lw=0)
-        ax.text(w.start, 0.97, f" {w.name}", transform=ax.get_xaxis_transform(),
-                fontsize=8, color=INK, alpha=0.6, va="top")
+    for w in prereg.WINDOWS:
+        ax.axvspan(w.start, w.end, color=MUTED, alpha=WINDOW_ALPHA[w.name], lw=0)
+        ax.text(w.start, 0.97, f" {WINDOW_LABELS[w.name]}", transform=ax.get_xaxis_transform(),
+                fontsize=8, color=INK, alpha=0.9 if w.name == "BF" else 0.6, va="top",
+                fontweight="bold" if w.name == "BF" else None)
     if now < prereg.CUTOFF:
         ax.axvline(now, color=MUTED, lw=0.8, ls=":")
     pts = sorted((o for o in obs if o.available and o.at >= prereg.W["B0"].start), key=lambda o: o.at)
@@ -104,10 +118,10 @@ def product_chart(path: Path, product: prereg.Product, obs, ref: Decimal | None,
         o = next(o for o in pts if o.at == maquiagem_at)
         ax.scatter([o.at], [float(o.price)], color=OCHRE, s=40, zorder=4, marker="D", label="segura (P2)")
     ax.set_xlim(prereg.W["B0"].start, prereg.CUTOFF)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m", tz=prereg.BRT))
+    ticks = window_ticks()
+    ax.set_xticks([mdates.date2num(t) for t, _ in ticks], [lab for _, lab in ticks])
     ax.yaxis.set_major_formatter(_brl)
-    ax.set_title(f"w{product.watch_id} · {product.label} · {product.group}", loc="left",
-                 fontsize=10, fontweight="bold")
+    ax.set_title(product.label, loc="left", fontsize=10, fontweight="bold")
     if real_times or maquiagem_at is not None:
         ax.legend(frameon=False, fontsize=8, loc="lower left")
     fig.tight_layout()

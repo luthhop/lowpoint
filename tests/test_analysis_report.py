@@ -114,3 +114,31 @@ def test_report_after_cutoff_with_real_and_maquiagem(tmp_path, capsys):
     assert "incompleto" not in text
     assert f"Excluídos desta pergunta (1): {lame.label} (cobertura < 70%: BF 60,0%)" in text
     assert (out / "charts" / "resumo.png").stat().st_size > 0
+
+
+def test_product_chart_publication_style(tmp_path, monkeypatch):
+    """[TESTE] Versão de publicação: título só com o nome, rótulos PT, ticks nas fronteiras, BF marcada."""
+    import matplotlib.colors as mcolors
+    from matplotlib.patches import Rectangle
+    captured = {}
+
+    def fake_save(fig, path, attempts=3):
+        ax = fig.axes[0]
+        captured["title"] = ax.get_title(loc="left")
+        captured["ticks"] = [t.get_text() for t in ax.get_xticklabels()]
+        captured["texts"] = [t.get_text().strip() for t in ax.texts]
+        spans = [p for p in ax.patches if isinstance(p, Rectangle)]
+        captured["alphas"] = [mcolors.to_rgba(p.get_facecolor())[3] for p in spans]
+
+    monkeypatch.setattr(charts, "_save", fake_save)
+    family, _ = charts.pick_mono_font()
+    charts._style(family)
+    ps5 = prereg.PRODUCTS[0]
+    charts.product_chart(tmp_path / "x.png", ps5, [], Decimal("4050"), True,
+                         datetime(2026, 11, 15, 10, 0, tzinfo=BRT))
+    assert captured["title"] == ps5.label
+    assert captured["ticks"] == ["14/11", "17/11", "23/11", "28/11", "07/12"]
+    for lab in ("B0", "PRÉ-BF", "BF", "PÓS-BF"):
+        assert lab in captured["texts"]
+    b0, pre, bf, pos = captured["alphas"]
+    assert bf > 2 * max(b0, pre, pos)
