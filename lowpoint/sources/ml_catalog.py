@@ -182,6 +182,8 @@ class MLCatalogSource(PriceSource):
                         official_store_id=item.get("official_store_id"),
                         free_shipping=shipping.get("free_shipping", False),
                         warranty=item.get("warranty"),
+                        deal_ids=tuple(item.get("deal_ids") or ()),
+                        tags=tuple(item.get("tags") or ()),
                     )
                 )
 

@@ -307,3 +307,69 @@ class TestAlertIsolation:
 
         mock_send.assert_not_called()
         assert db_session.query(PriceHistory).filter_by(product_id=product_id).count() == 1
+
+
+class TestDealIdsAndTags:
+    """[TESTE] offer_snapshots grava deal_ids e tags (MockSource, SQLite em memória)."""
+
+    def _collect(self, db_session, mock_source, catalog_id, offers):
+        _seed_product_with_watch(db_session, catalog_id)
+        mock_source.set_response(catalog_id, _make_snapshot(catalog_id, offers))
+        with (
+            patch("lowpoint.collect.SessionLocal", return_value=db_session),
+            patch("lowpoint.collect.send_alerts_after_collect"),
+        ):
+            from lowpoint.collect import collect_once
+            collect_once(mock_source)
+
+    def test_snapshot_saves_lists(self, db_session, mock_source):
+        offers = [
+            _make_offer(item_id="MLB_D", deal_ids=("MLB-DEAL-1",), tags=("cart_eligible", "kvs_primary")),
+            _make_offer(item_id="MLB_E", price=Decimal("1600.00")),
+        ]
+        self._collect(db_session, mock_source, "MLB_DEALS", offers)
+
+        by_item = {s.item_id: s for s in db_session.query(OfferSnapshot).all()}
+        assert by_item["MLB_D"].deal_ids == ["MLB-DEAL-1"]
+        assert by_item["MLB_D"].tags == ["cart_eligible", "kvs_primary"]
+        # Coletado sem nada: [] (não NULL). NULL fica para linhas de antes da mudança.
+        assert by_item["MLB_E"].deal_ids == []
+        assert by_item["MLB_E"].tags == []
+
+    def test_old_row_without_fields_stays_sql_null(self, db_session):
+        product = _seed_product_with_watch(db_session, "MLB_OLD")
+        db_session.add(OfferSnapshot(
+            product_id=product.id, item_id="MLB_OLD1", seller_id=1,
+            price=Decimal("10.00"), original_price=None, condition="new",
+            official_store_id=None, free_shipping=False, warranty=None,
+        ))
+        db_session.commit()
+        from sqlalchemy import text
+        row = db_session.execute(text(
+            "select deal_ids is null, tags is null from offer_snapshots where item_id='MLB_OLD1'"
+        )).one()
+        assert tuple(row) == (1, 1)
+
+    def test_best_offer_unchanged_by_deal_and_tags(self, db_session, mock_source):
+        plain = [
+            _make_offer(item_id="MLB_A", price=Decimal("1400.00"), seller_id=10),
+            _make_offer(item_id="MLB_B", price=Decimal("1500.00"), seller_id=20),
+        ]
+        tagged = [
+            _make_offer(item_id="MLB_A", price=Decimal("1400.00"), seller_id=10, tags=("x",)),
+            _make_offer(item_id="MLB_B", price=Decimal("1500.00"), seller_id=20,
+                        deal_ids=("MLB-DEAL-1",), tags=("y",)),
+        ]
+        # Uma coleta só com os dois produtos (collect_once pega todos os ativos).
+        _seed_product_with_watch(db_session, "MLB_PLAIN")
+        mock_source.set_response("MLB_PLAIN", _make_snapshot("MLB_PLAIN", plain))
+        self._collect(db_session, mock_source, "MLB_TAGGED", tagged)
+
+        rows = {
+            p.catalog_product_id: db_session.query(PriceHistory).filter_by(product_id=p.id).one()
+            for p in db_session.query(Product).all()
+        }
+        a, b = rows["MLB_PLAIN"], rows["MLB_TAGGED"]
+        assert (a.price, a.original_price, a.item_id, a.seller_id, a.available) == (
+            b.price, b.original_price, b.item_id, b.seller_id, b.available
+        )

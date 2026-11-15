@@ -12,6 +12,8 @@
       "official_store_id": 1234,
       "shipping": {"free_shipping": true},
       "warranty": "12 meses de garantia de fábrica",
+      "deal_ids": ["MLB-DEAL-BF26"],
+      "tags": ["good_quality_thumbnail", "cart_eligible"],
       "sale_price": {
         "amount": 1329.00,
         "regular_amount": 2180.00,
@@ -46,6 +48,8 @@
       "official_store_id": null,
       "shipping": {"free_shipping": true},
       "warranty": null,
+      "deal_ids": null,
+      "tags": null,
       "sale_price": null
     }
   ]

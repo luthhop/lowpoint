@@ -110,6 +110,34 @@ class TestMLCatalogSourceParsing:
         assert len(used) == 1
         assert used[0].price == Decimal("1200")
 
+    def test_parse_deal_ids_and_tags(self):
+        """[TESTE] deal_ids/tags: lista lida; ausente ou null vira ()."""
+        fixture_data = json.loads(
+            (FIXTURES / "ml_catalog_response.json").read_text(encoding="utf-8")
+        )
+        source = MLCatalogSource.__new__(MLCatalogSource)
+
+        def mock_get(url):
+            if "/items" in url:
+                return fixture_data
+            return {"name": "x", "pictures": []}
+
+        with patch.object(source, "_get", side_effect=mock_get):
+            offers = source.fetch_catalog("MLB24061510").offers
+
+        with_fields, missing, null = offers
+        assert with_fields.deal_ids == ("MLB-DEAL-BF26",)
+        assert with_fields.tags == ("good_quality_thumbnail", "cart_eligible")
+        assert missing.deal_ids == () and missing.tags == ()
+        assert null.deal_ids == () and null.tags == ()
+
+    def test_offer_data_defaults_are_empty(self):
+        offer = OfferData(
+            item_id="MLB1", seller_id=1, price=Decimal("10"), original_price=None,
+            condition="new", official_store_id=None, free_shipping=False, warranty=None,
+        )
+        assert offer.deal_ids == () and offer.tags == ()
+
     def test_empty_results(self):
         source = MLCatalogSource.__new__(MLCatalogSource)
         product_info = {"name": "", "pictures": []}

@@ -6,17 +6,24 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    JSON,
     Integer,
     Numeric,
     String,
     UniqueConstraint,
     false,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
     pass
+
+
+# Lista JSON: JSONB no Postgres, JSON no SQLite dos testes. None vira SQL NULL
+# (linhas de antes da mudança); coletado sem nada grava [].
+JSONList = JSON(none_as_null=True).with_variant(JSONB(none_as_null=True), "postgresql")
 
 
 def _utcnow() -> datetime:
@@ -92,6 +99,8 @@ class OfferSnapshot(Base):
     official_store_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     free_shipping: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     warranty: Mapped[str | None] = mapped_column(String, nullable=True)
+    deal_ids: Mapped[list[str] | None] = mapped_column(JSONList, nullable=True)
+    tags: Mapped[list[str] | None] = mapped_column(JSONList, nullable=True)
     collected_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )

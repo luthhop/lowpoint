@@ -94,6 +94,8 @@ def _collect_product(
                 official_store_id=offer.official_store_id,
                 free_shipping=offer.free_shipping,
                 warranty=offer.warranty,
+                deal_ids=list(offer.deal_ids),
+                tags=list(offer.tags),
                 collected_at=now,
             )
         )

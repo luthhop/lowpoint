@@ -14,6 +14,9 @@ class OfferData:
     official_store_id: int | None
     free_shipping: bool
     warranty: str | None
+    # Exploratórios (pré-registro BF): gravados, mas sem uso em veredito/alertas.
+    deal_ids: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
