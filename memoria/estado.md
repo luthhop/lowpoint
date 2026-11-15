@@ -16,5 +16,5 @@
 - Web = vitrine + beta por convite. No main (15/11): CTAs "Ver o código"/"Quero testar" (t.me/lowpointbr_bot?start=beta), PODE IR novo, FAQ (conta, alertas, beta), elipse presa ao −40%; bot com pedido de convite
 ## Próximo
 - PRÓXIMO: conferir deploy da landing e do webhook; divergências restantes em memoria/design/landing-divergencias-v11.md
-- Análise BF: pré-registro v1 (tag pre-registro-v1 → 7d1b9d8) + Emenda 1: deal_ids+tags gravados desde 15/11 09:45:29 (7da404c, migração a6b7c8d9e0f1). Não altera P1–P5
+- Análise BF: pré-registro v1 + Emendas 1 (deal_ids+tags desde 15/11 09:45:29) e 2 (P5, exclusão por cobertura, P3 nos 18). Código em analysis/ (python -m analysis.report; deps em requirements-analysis.txt)
 - Decidir sobre reativar LG 32" (watch 1, inativo desde 09/11; agora cabe, 3/20); animações; dashboard pós-BF

@@ -127,3 +127,14 @@ Formato: `### Emenda N — dd/mm/aaaa` + o que mudou + motivo + se afeta alguma 
 - **Primeira coleta com os campos**: 15/11/2026 09:45:29 BRT (20 produtos, 527 ofertas; deal_ids: 526 `[]` e 1 preenchido; tags preenchidas nas 527). As 22.296 linhas anteriores ficam com NULL.
 - **Motivo**: permitir análise exploratória de campanhas/deals na BF.
 - **Efeito**: **não altera P1–P5** (métricas, janelas, limiares, produtos e coletas usadas continuam as da v1).
+
+### Emenda 2 — 15/11/2026 10:18 BRT
+
+- **Motivo**: esclarecer critérios antes de qualquer dado da BF (só a B0 está em andamento; nenhuma resposta de P1–P5 foi calculada). **Não muda janelas, limiares do veredito nem o commit das regras.**
+- **P5** (o texto da v1 era contraditório entre "algum controle fora → não" e "só um fora → misto"): se a mediana de |variação BF vs. Ref| dos 18 for < 5% ("os 18 parados"), a resposta é "não". Senão: 2 controles no esperado → "sim"; 1 → "misto"; 0 → "não". P5 só é respondida com os 2 controles com cobertura.
+- **Cobertura** (substitui "não é descartado em silêncio" como regra de manchete):
+  - Produto com cobertura < 70% numa janela usada pela pergunta é **excluído daquela pergunta** (não das outras) e não anula a pergunta. O relatório lista os excluídos e o motivo.
+  - Os cortes de manchete viram **proporção dos produtos com cobertura** entre os 18 não-controle: P1a/P1b "a maioria" ≥ 10/18 (≈ 55,6%), "não teve" ≤ 4/18 (≈ 22,2%); P2 "foi comum" ≥ 5/18 (≈ 27,8%); P3 e P4 já eram proporções (50% / 20%, 50%). Comparação com a fração exata, para 10 de 18 continuar sendo "a maioria".
+  - A manchete só é calculada com **≥ 12 dos 18** cobertos; abaixo disso, "incompleto".
+- **P3**: a base é a mesma dos 18 não-controle (denominador: os que tiveram riscado na BF). Os controles ficam no P5.
+- **Efeito**: nenhuma resposta já calculada (não havia nenhuma).
