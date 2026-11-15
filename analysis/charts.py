@@ -101,8 +101,14 @@ def product_chart(path: Path, product: prereg.Product, obs, ref: Decimal | None,
         ax.text(w.start, 0.97, f" {WINDOW_LABELS[w.name]}", transform=ax.get_xaxis_transform(),
                 fontsize=8, color=INK, alpha=0.9 if w.name == "BF" else 0.6, va="top",
                 fontweight="bold" if w.name == "BF" else None)
+    # Fronteiras internas das janelas (17/11 14:50, 23/11 00:00, 28/11 00:00).
+    for w in prereg.WINDOWS[1:]:
+        ax.axvline(w.start, color=MUTED, lw=0.8, gid="fronteira")
+    # "Agora" só enquanto a PÓS-BF não terminou (fim exclusivo: 08/12 00:00).
     if now < prereg.CUTOFF:
-        ax.axvline(now, color=MUTED, lw=0.8, ls=":")
+        ax.axvline(now, color=MUTED, lw=0.8, ls=":", gid="agora")
+        ax.text(now, 1.0, "agora", transform=ax.get_xaxis_transform(), ha="center", va="bottom",
+                fontsize=7, color=MUTED, fontfamily=plt.rcParams["font.family"], gid="agora")
     pts = sorted((o for o in obs if o.available and o.at >= prereg.W["B0"].start), key=lambda o: o.at)
     if pts:
         ax.step([o.at for o in pts], [float(o.price) for o in pts], where="post", color=INK, lw=1.2)
@@ -121,7 +127,7 @@ def product_chart(path: Path, product: prereg.Product, obs, ref: Decimal | None,
     ticks = window_ticks()
     ax.set_xticks([mdates.date2num(t) for t, _ in ticks], [lab for _, lab in ticks])
     ax.yaxis.set_major_formatter(_brl)
-    ax.set_title(product.label, loc="left", fontsize=10, fontweight="bold")
+    ax.set_title(product.label, loc="left", fontsize=10, fontweight="bold", pad=14)  # espaço p/ "agora"
     if real_times or maquiagem_at is not None:
         ax.legend(frameon=False, fontsize=8, loc="lower left")
     fig.tight_layout()

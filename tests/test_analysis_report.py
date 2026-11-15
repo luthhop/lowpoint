@@ -142,3 +142,71 @@ def test_product_chart_publication_style(tmp_path, monkeypatch):
         assert lab in captured["texts"]
     b0, pre, bf, pos = captured["alphas"]
     assert bf > 2 * max(b0, pre, pos)
+
+
+def _capture_product_chart(monkeypatch, tmp_path, now):
+    import matplotlib.colors as mcolors
+    import matplotlib.dates as mdates
+    captured = {}
+
+    def _num(x):  # axvline guarda datetime; normaliza para número de data
+        return mdates.date2num(x) if isinstance(x, datetime) else float(x)
+
+    def fake_save(fig, path, attempts=3):
+        ax = fig.axes[0]
+        captured["lines"] = [
+            (l.get_gid(), _num(l.get_xdata()[0]), mcolors.to_hex(l.get_color()).upper(), l.get_linewidth())
+            for l in ax.lines if l.get_gid()
+        ]
+        captured["texts"] = [(t.get_gid(), t.get_text().strip(), mcolors.to_hex(t.get_color()).upper(),
+                              t.get_fontfamily(), t.get_fontsize()) for t in ax.texts if t.get_gid()]
+
+    monkeypatch.setattr(charts, "_save", fake_save)
+    family, _ = charts.pick_mono_font()
+    charts._style(family)
+    charts.product_chart(tmp_path / "x.png", prereg.PRODUCTS[0], [], Decimal("4050"), True, now)
+    return captured
+
+
+def test_window_boundaries_are_thin_muted_lines(tmp_path, monkeypatch):
+    import matplotlib.dates as mdates
+    c = _capture_product_chart(monkeypatch, tmp_path, datetime(2026, 11, 15, 10, 0, tzinfo=BRT))
+    bounds = [(x, color, lw) for gid, x, color, lw in c["lines"] if gid == "fronteira"]
+    expected = [mdates.date2num(datetime(2026, 11, d, h, m, tzinfo=BRT))
+                for d, h, m in ((17, 14, 50), (23, 0, 0), (28, 0, 0))]
+    assert [round(x, 6) for x, _, _ in bounds] == [round(x, 6) for x in expected]
+    assert all(color == "#999999" and lw == 0.8 for _, color, lw in bounds)
+
+
+def test_now_line_has_label_on_top(tmp_path, monkeypatch):
+    now = datetime(2026, 11, 15, 10, 0, tzinfo=BRT)
+    c = _capture_product_chart(monkeypatch, tmp_path, now)
+    assert [gid for gid, *_ in c["lines"]].count("agora") == 1
+    (gid, text, color, family, size), = [t for t in c["texts"] if t[0] == "agora"]
+    assert text == "agora" and color == "#999999" and family[0] == "IBM Plex Mono" and size <= 8
+
+
+def test_no_now_line_after_end_of_pos_bf(tmp_path, monkeypatch):
+    c = _capture_product_chart(monkeypatch, tmp_path, prereg.CUTOFF)
+    assert "agora" not in [gid for gid, *_ in c["lines"]]
+    assert "agora" not in [t[0] for t in c["texts"]]
+
+
+def test_report_after_dec_8_has_no_now_line(tmp_path, monkeypatch):
+    seen = []
+    real_save = charts._save
+
+    def spy(fig, path, attempts=3):
+        ax = fig.axes[0]
+        seen.append((path.name, [l.get_gid() for l in ax.lines], [t.get_gid() for t in ax.texts]))
+        real_save(fig, path, attempts)
+
+    monkeypatch.setattr(charts, "_save", spy)
+    data = _write_data(tmp_path, datetime(2026, 11, 20, tzinfo=BRT))
+    out = tmp_path / "out"
+    after = prereg.CUTOFF + timedelta(days=3)
+    assert report.main(["--no-export", "--data-dir", str(data), "--out", str(out)], now=after) == 0
+    product = [s for s in seen if s[0].startswith("w")]
+    assert len(product) == 20
+    assert all("agora" not in lines and "agora" not in texts for _, lines, texts in product)
+    assert all(lines.count("fronteira") == 3 for _, lines, _ in product)
