@@ -83,7 +83,7 @@ Botão: "Ver oferta"
 "OS OUTROS TE MOSTRAM A PROMOÇÃO.
 O LOWPOINT TE DIZ SE ELA É DE VERDADE."
 
-**Subtítulo** (Libre Franklin 400, 18px): "Veja ao vivo os produtos que o Lowpoint está vigiando e o veredito de cada preço. O bot no Telegram está em beta fechado, por convite." (proposto)
+**Subtítulo** (Libre Franklin 400, 18px): "Veja ao vivo os preços que o Lowpoint está vigiando. O bot no Telegram está em beta fechado, por convite." (aprovado 15/11; sem veredito ao vivo) + link "Ver a vitrine ao vivo →" para /ao-vivo/
 
 **CTA principal**: "Ver o código" (botão Ink, leva ao GitHub)
 **CTA secundário**: "Quero testar" (texto-link/botão outline; pedido de convite pro beta. Destino: https://t.me/lowpointbr_bot?start=beta)
@@ -281,7 +281,7 @@ Se nenhum dos dois aciona e o preço caiu pelo menos 5% abaixo da mediana e é o
 A PERGUNTA É SE ELE É DE VERDADE."
 
 **CTA**: "Ver o código" (principal) · "Quero testar" (secundário)
-**Reforço**: "Ou só olha a vitrine: os preços ao vivo estão logo acima." (proposto)
+**Reforço**: "Ou só olha a vitrine ao vivo." (aprovado 15/11; link para /ao-vivo/)
 
 **Animação**: título fade-in. *Reduced-motion*: estático.
 

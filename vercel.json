@@ -7,6 +7,10 @@
     {
       "src": "api/tick.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "api/painel.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -18,6 +22,10 @@
     {
       "src": "/api/tick",
       "dest": "/api/tick.py"
+    },
+    {
+      "src": "/api/painel",
+      "dest": "/api/painel.py"
     }
   ]
 }

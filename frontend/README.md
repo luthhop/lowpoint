@@ -37,6 +37,14 @@ O exemplo usa os marcos aprovados: preço normal R$ 3.450, pico R$ 6.000, falsa 
 
 Navegação por âncoras; links externos para o GitHub; FAQ com `details`/`summary`, teclado e apenas uma resposta aberta; link para pular ao conteúdo; gráficos com descrição acessível. `prefers-reduced-motion` desativa animações, rolagem suave e revelação progressiva do gráfico.
 
+## Vitrine /ao-vivo
+
+Segunda página do build (`ao-vivo/index.html`, `src/ao-vivo/`), lida de `GET /api/painel` no projeto `lowpoint` (o bot), não neste projeto.
+
+- **Produção:** no projeto `lowpoint-web` da Vercel, em Settings → Environment Variables, criar `VITE_PAINEL_URL` = `https://lowpoint-theta.vercel.app/api/painel` (Production; Preview só se o CORS liberar a origem do preview). O Vite grava o valor no bundle durante o build, então a mudança só vale depois de um novo deploy. Sem a variável, o build de produção usa esse mesmo endereço.
+- **CORS:** o endpoint responde `Access-Control-Allow-Origin: https://lowpoint-web.vercel.app` (variável `PAINEL_ALLOWED_ORIGIN` no projeto `lowpoint`). Outro domínio do site exige mudar essa variável.
+- **Local:** na raiz, `python scripts/painel_local.py` (Neon em READ ONLY, porta 8787); aqui, `npm run dev` faz proxy de `/api/painel`. Prévia: http://127.0.0.1:5173/ao-vivo/.
+
 ## Escopo e publicação
 
 Esta é uma vitrine do projeto em teste pessoal: não há cadastro público, consulta de preços ao vivo ou conexão com o bot/banco. Os comandos são demonstrações; clicar nos CTAs nunca envia mensagens ao Telegram.

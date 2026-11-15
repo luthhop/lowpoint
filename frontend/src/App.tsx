@@ -55,6 +55,7 @@ function Hero() {
         <p className="eyebrow"><span className="desktop-copy">Não confie na etiqueta. Confira a história.</span><span className="mobile-copy">Não confie na etiqueta.</span></p>
         <h1 id="hero-title">Tem<br />desconto<br />que engana.</h1>
         <p className="hero-description"><span className="desktop-copy">Preço riscado impressiona. Histórico não mente.<br />O Lowpoint acompanha o produto que você quer e entrega o veredito no Telegram.</span><span className="mobile-copy">A gente confere o histórico.<br />Você recebe o veredito no Telegram.</span></p>
+        <p className="hero-live">Veja ao vivo os preços que o Lowpoint está vigiando. O bot no Telegram está em beta fechado, por convite. <a className="text-link" href="/ao-vivo/">Ver a vitrine ao vivo<span className="link-arrow" aria-hidden="true">→</span></a></p>
       </div>
       <PriceEvidence />
       <div className="hero-actions" data-reveal>
@@ -144,12 +145,16 @@ const questions = [
   ['Você ganha comissão se eu comprar?', 'Hoje não há links de afiliado. A regra do projeto é que uma comissão nunca influencie o veredito.'],
 ];
 
+function LiveCallout() {
+  return <section className="live-callout section-pad" aria-labelledby="live-callout-title"><div className="container live-callout-inner" data-reveal><div><p className="eyebrow">Vitrine / Mercado Livre</p><h2 id="live-callout-title">Os preços reais, agora.</h2><p>20 produtos vigiados de hora em hora, com a referência de antes da Black Friday.</p></div><a className="button" href="/ao-vivo/">Ver a vitrine ao vivo<span className="link-arrow" aria-hidden="true">→</span></a></div></section>;
+}
+
 function FAQ() {
   return <section id="perguntas" className="faq section-pad" aria-labelledby="faq-title"><div className="container faq-layout"><div className="faq-intro" data-reveal><SectionTitle eyebrow="Perguntas frequentes"><span id="faq-title">Perguntas<br />sem rodeio.</span></SectionTitle><p>Tudo que você precisa saber<br />sobre esta versão do Lowpoint.</p><p className="eyebrow">Fase atual / beta por convite</p></div><div className="faq-items">{questions.map(([q, a], i) => <details key={q} name="lowpoint-faq" open={i === 0 || undefined} data-reveal><summary>{q}<span className="faq-symbol" aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></div></section>;
 }
 
 function FinalCTA() {
-  return <section className="final-cta dark section-pad" aria-labelledby="cta-title"><div className="container"><p className="eyebrow" data-reveal>Código aberto / em desenvolvimento</p><h2 id="cta-title" data-reveal>Antes de comprar,<br />confere a história.</h2><div className="cta-bottom" data-reveal><p>O Lowpoint está em desenvolvimento.<br />Acompanhe o código, as decisões e a evolução do projeto.</p><div className="action-row"><GithubLink className="button button--light">Ver o código</GithubLink><InviteLink className="text-link">Quero testar</InviteLink></div></div></div></section>;
+  return <section className="final-cta dark section-pad" aria-labelledby="cta-title"><div className="container"><p className="eyebrow" data-reveal>Código aberto / em desenvolvimento</p><h2 id="cta-title" data-reveal>Antes de comprar,<br />confere a história.</h2><div className="cta-bottom" data-reveal><p>O Lowpoint está em desenvolvimento.<br />Acompanhe o código, as decisões e a evolução do projeto.</p><div className="action-row"><GithubLink className="button button--light">Ver o código</GithubLink><InviteLink className="text-link">Quero testar</InviteLink></div></div><p className="cta-live" data-reveal><a className="text-link" href="/ao-vivo/">Ou só olha a vitrine ao vivo.</a></p></div></section>;
 }
 
 export default function App() {
@@ -157,7 +162,7 @@ export default function App() {
   return <>
     <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <header id="inicio" className="site-header"><div className="container header-inner"><a href="#inicio" aria-label="Lowpoint, início"><Wordmark /></a><nav aria-label="Navegação principal"><a href="#como-funciona">Como funciona</a><a href="#vereditos">Os vereditos</a><a href="#perguntas">Perguntas</a><InviteLink className="nav-invite">Quero testar</InviteLink><GithubLink>Ver o código</GithubLink></nav></div></header>
-    <main id="conteudo" tabIndex={-1}><Hero /><Timeline /><Resolution /><AlertPreview /><HowItWorks /><Verdicts /><FAQ /><FinalCTA /></main>
+    <main id="conteudo" tabIndex={-1}><Hero /><Timeline /><Resolution /><AlertPreview /><HowItWorks /><Verdicts /><LiveCallout /><FAQ /><FinalCTA /></main>
     <footer className="site-footer dark"><div className="container footer-inner"><a href="#inicio" aria-label="Voltar ao início"><Wordmark /></a><span className="mono footer-notice">O Lowpoint usa a API oficial de catálogo do Mercado Livre. É um projeto independente: não pertence à plataforma nem é aprovado por ela.</span><GithubLink className="mono" /></div></footer>
   </>;
 }

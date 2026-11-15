@@ -11,6 +11,7 @@ Feito em 15/11: FAQ "Quando chega um alerta?" com o anti-spam novo, "Já posso u
 - **FAQ**:
   - Faltam: "Por que só Mercado Livre?", "Como vocês sabem que o desconto é falso?", "É de graça?", "É legal coletar esses dados?". Existem só na landing: "Funciona com qualquer link?", "E se ainda não houver histórico?".
   - O wireframe descreve a vitrine "ao vivo" na resposta de conta; ela ainda não existe no site, por isso a resposta implementada não promete isso.
-- **CTA final**: título "Antes de comprar, confere a história." × "O PRÓXIMO DESCONTO VAI VIR…"; sem reforço.
+- **CTA final**: título "Antes de comprar, confere a história." × "O PRÓXIMO DESCONTO VAI VIR…". Reforço "Ou só olha a vitrine ao vivo." implementado (15/11).
+- **Vitrine /ao-vivo (15/11)**: página, subtítulo do hero e bloco-chamada "Os preços reais, agora." (antes do FAQ) implementados. A /ao-vivo foi feita direto no código, seguindo a marca, por ser uma tela de dados; revisão visual no Paper fica opcional.
 - **Footer**: falta "Sem vínculo com o Mercado Livre" e os links "Como funciona · Perguntas".
 - **Wireframe desatualizado vs. código**: o FAQ "Como vocês sabem…" não menciona o recuo ≥5% do topo (regra de 14/11).
