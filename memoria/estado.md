@@ -16,5 +16,5 @@
 - Web = vitrine + beta por convite. No main (15/11): CTAs "Ver o código"/"Quero testar" (t.me/lowpointbr_bot?start=beta), PODE IR novo, FAQ (conta, alertas, beta), elipse presa ao −40%; bot com pedido de convite
 ## Próximo
 - PRÓXIMO: conferir deploy da landing e do webhook; divergências restantes em memoria/design/landing-divergencias-v11.md
-- Análise BF: pré-registro v1 em memoria/analise/plano-pre-registro.md (15/11), aguardando commit + tag pre-registro-v1. Coletor sem mudança
+- Análise BF: pré-registro v1 congelado (tag pre-registro-v1 → 7d1b9d8). deal_ids+tags em offer_snapshots: migração a6b7c8d9e0f1 no Neon 15/11 09:36; falta confirmar 1ª coleta e registrar emenda
 - Decidir sobre reativar LG 32" (watch 1, inativo desde 09/11; agora cabe, 3/20); animações; dashboard pós-BF
