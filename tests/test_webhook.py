@@ -437,3 +437,13 @@ class TestRemoverApelidoSemSilenciosos:
         result, buttons = self._buttons(db_session, cmd)
         assert buttons == []
         assert result["text"] == empty
+
+
+def test_adicionar_non_catalog_link_message_is_neutral(db_session):
+    """[TESTE] Termos ML 2.2.4: frase do erro sem o nome da plataforma; exemplo de link mantido."""
+    with patch("lowpoint.telegram.webhook.SessionLocal", return_value=db_session):
+        result = handle_update(_update("/adicionar https://exemplo.com/produto 3500"), "test-secret")
+    text = result["text"]
+    assert text.startswith("Esse link não é de um produto de catálogo.\n\n")
+    assert "Mercado Livre" not in text
+    assert "mercadolivre.com.br/p/MLB12345678" in text

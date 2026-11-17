@@ -60,10 +60,10 @@ function Hero() {
       <div className="hero-actions" data-reveal>
         <div className="action-row"><GithubLink className="button">Ver o código</GithubLink><InviteLink className="text-link invite-link">Quero testar</InviteLink></div>
         <p className="hero-motto mono">Sem gritaria. Sem “corre!”. Com dados.</p>
-        <p className="mobile-copy hero-caption mono">Exemplo ilustrativo · preços fictícios<br />Mercado Livre · Telegram · código aberto</p>
+        <p className="mobile-copy hero-caption mono">Exemplo ilustrativo · preços fictícios<br />Histórico de preços · Telegram · código aberto</p>
       </div>
     </div>
-    <div className="hero-strip container mono"><span>Mercado Livre · Telegram · código aberto</span><span>Exemplo ilustrativo. Preços fictícios.</span><a href="#historia">Role para ver a história <span aria-hidden="true">↓</span></a></div>
+    <div className="hero-strip container mono"><span>Histórico de preços · Telegram · código aberto</span><span>Exemplo ilustrativo. Preços fictícios.</span><a href="#historia">Role para ver a história <span aria-hidden="true">↓</span></a></div>
   </section>;
 }
 
@@ -108,7 +108,7 @@ function AlertPreview() {
 }
 
 const steps = [
-  ['Manda o link', 'Escolhe um produto de catálogo do Mercado Livre e manda o link no Telegram.'],
+  ['Manda o link', 'Escolhe um produto de catálogo e manda o link no Telegram.'],
   ['Define teu alvo', 'Diz quanto quer pagar. O produto fica na tua lista de monitoramento.'],
   ['Recebe o aviso', 'Coletas programadas a cada hora. O alerta chega com contexto quando os critérios são atingidos.'],
 ];
@@ -117,7 +117,7 @@ function HowItWorks() {
   return <section id="como-funciona" className="how section-pad" aria-labelledby="how-title"><div className="container">
     <div className="section-heading"><SectionTitle eyebrow="Como funciona"><span id="how-title">Você escolhe.<br />A gente fica de olho.</span></SectionTitle><p className="section-aside" data-reveal>Um produto que você quer.<br />Um preço que faz sentido pra você.<br />O histórico ajuda a decidir.</p></div>
     <div className="how-layout"><ol className="steps">{steps.map(([title, text], i) => <li key={title} data-reveal><span className="step-number mono" aria-hidden="true">0{i + 1}</span><div><h3>{title}</h3><p>{text}</p></div></li>)}</ol>
-      <aside className="command-demo" data-reveal aria-label="Exemplo de como adicionar um produto"><p className="eyebrow">Exemplo de comando / Telegram</p><div className="command"><span className="mono">Você</span><code>/adicionar<br />mercadolivre.com.br/p/MLB57081243<br />3300 PS5</code></div><h3>Produto escolhido.<br />Alvo definido.</h3><p>Você acompanha a tua lista.<br />O Lowpoint acompanha os preços.</p><p className="demo-note mono">Demonstração ilustrativa.<br />O bot está em beta por convite.</p><div className="action-row demo-actions"><InviteLink className="button">Quero testar</InviteLink><GithubLink className="text-link">Ver o código</GithubLink></div></aside>
+      <aside className="command-demo" data-reveal aria-label="Exemplo de como adicionar um produto"><p className="eyebrow">Exemplo de comando / Telegram</p><div className="command"><span className="mono">Você</span><code>/adicionar<br />…/p/MLB57081243<br />3300 PS5</code></div><h3>Produto escolhido.<br />Alvo definido.</h3><p>Você acompanha a tua lista.<br />O Lowpoint acompanha os preços.</p><p className="demo-note mono">Demonstração ilustrativa.<br />O bot está em beta por convite.</p><div className="action-row demo-actions"><InviteLink className="button">Quero testar</InviteLink><GithubLink className="text-link">Ver o código</GithubLink></div></aside>
     </div>
   </div></section>;
 }
@@ -137,7 +137,7 @@ function Verdicts() {
 const questions = [
   ['Preciso criar conta?', 'Não. O Lowpoint está em beta por convite: toca em “Quero testar”, o bot abre no Telegram e teu pedido chega pra gente. A abertura geral fica para a próxima fase.'],
   ['Já posso usar o bot?', 'O Lowpoint está em beta por convite, com vagas liberadas aos poucos. Toca em “Quero testar” pra pedir a tua. O código está aberto no GitHub.'],
-  ['Funciona com qualquer link do Mercado Livre?', 'Nesta versão, usamos links de produtos de catálogo: aqueles com /p/MLB no endereço. Links de anúncios individuais ainda não são aceitos.'],
+  ['Funciona com qualquer link?', 'Nesta versão, usamos links de produtos de catálogo: aqueles com /p/MLB no endereço. Links de anúncios individuais ainda não são aceitos.'],
   ['Quando chega um alerta?', 'As coletas são programadas a cada hora (na Black Friday, a cada 15 minutos). Você recebe um aviso quando o veredito muda. Se o veredito se repetir, o bot só avisa de novo quando o preço cair mais 3%, e um “Segura” repetido chega no máximo 1 vez por dia. Nunca passa de 1 aviso por hora por produto.'],
   ['E se ainda não houver histórico?', 'Antes de completar sete dias de monitoramento, o bot pode avisar que o alvo foi atingido, mas não afirma que encontrou um desconto real.'],
   ['Como trata ofertas suspeitas?', 'O Lowpoint compara os preços para filtrar ofertas muito abaixo do padrão e informa quando alguma foi ignorada. Vale conferir o vendedor e as condições da oferta.'],
@@ -158,6 +158,6 @@ export default function App() {
     <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <header id="inicio" className="site-header"><div className="container header-inner"><a href="#inicio" aria-label="Lowpoint, início"><Wordmark /></a><nav aria-label="Navegação principal"><a href="#como-funciona">Como funciona</a><a href="#vereditos">Os vereditos</a><a href="#perguntas">Perguntas</a><InviteLink className="nav-invite">Quero testar</InviteLink><GithubLink>Ver o código</GithubLink></nav></div></header>
     <main id="conteudo" tabIndex={-1}><Hero /><Timeline /><Resolution /><AlertPreview /><HowItWorks /><Verdicts /><FAQ /><FinalCTA /></main>
-    <footer className="site-footer dark"><div className="container footer-inner"><a href="#inicio" aria-label="Voltar ao início"><Wordmark /></a><span className="mono">Acompanhe o desenvolvimento</span><GithubLink className="mono" /></div></footer>
+    <footer className="site-footer dark"><div className="container footer-inner"><a href="#inicio" aria-label="Voltar ao início"><Wordmark /></a><span className="mono footer-notice">O Lowpoint usa a API oficial de catálogo do Mercado Livre. É um projeto independente: não pertence à plataforma nem é aprovado por ela.</span><GithubLink className="mono" /></div></footer>
   </>;
 }

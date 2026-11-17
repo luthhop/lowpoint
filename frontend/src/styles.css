@@ -187,6 +187,7 @@ a:hover .link-arrow{transform:translate(2px,-2px)}
 .site-footer .wordmark{font-size:24px}
 .site-footer .mono{font-size:11px;line-height:18px;text-transform:uppercase}
 .footer-inner>span{color:#ccc}
+.site-footer .footer-notice{text-transform:none;max-width:520px}
 
 /* Enhancement only: reduced motion and a missing observer keep all content visible. */
 [data-reveal]{--reveal-delay:0ms}
@@ -288,6 +289,8 @@ html[data-motion='ready'] [data-reveal]:not(.is-visible){opacity:0;transform:tra
   .final-cta h2{font-size:44px;line-height:46px}
   .cta-bottom{align-items:flex-start;flex-direction:column;gap:28px}
   .footer-inner>span{display:none}
+  .footer-inner{flex-wrap:wrap}
+  .footer-inner>.footer-notice{display:block;order:3;flex-basis:100%;max-width:none}
 }
 
 @media(max-width:600px){

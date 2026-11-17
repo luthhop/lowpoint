@@ -86,7 +86,7 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
     if not catalog_id:
         return _reply(
             chat_id,
-            "Esse link não é de produto de catálogo do Mercado Livre.\n\n"
+            "Esse link não é de um produto de catálogo.\n\n"
             "Preciso de um link assim:\n"
             "mercadolivre.com.br/p/MLB12345678",
         )

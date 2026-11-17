@@ -14,7 +14,7 @@ Grupos e apps de promoção mandam centenas de ofertas misturadas. O produto que
 
 ## Como o Lowpoint resolve
 
-Bot pessoal no Telegram que monitora produtos específicos no Mercado Livre. Alerta quando o preço atinge o alvo e dá um **veredito claro** com base no histórico de preços:
+Bot pessoal no Telegram que monitora produtos específicos de catálogo. Alerta quando o preço atinge o alvo e dá um **veredito claro** com base no histórico de preços:
 
 | Veredito | Significado |
 |---|---|
@@ -55,7 +55,7 @@ O Lowpoint não cria urgência. Ele tira a ansiedade da compra.
 
 ```mermaid
 graph LR
-    ML["Mercado Livre<br/>/products/{id}/items"] -->|API oficial| C["Coletor<br/>GitHub Actions<br/>1x por hora"]
+    ML["API de catálogo<br/>/products/{id}/items"] -->|API oficial| C["Coletor<br/>GitHub Actions<br/>1x por hora"]
     C -->|offer_snapshots<br/>price_history| DB[(Neon<br/>PostgreSQL)]
     DB --> V["Veredito<br/>real · maquiado · suspeito"]
     V --> B["Bot Telegram"]
@@ -129,7 +129,7 @@ docker compose up -d
 alembic upgrade head
 ```
 
-### Migrar tokens do ML
+### Migrar tokens da API
 
 ```bash
 # Colocar tokens em ml_tokens.json (ver .env.example para o formato)
@@ -177,3 +177,5 @@ O processo também é o produto: o vault de memória fica no repositório, mostr
 ---
 
 MIT License
+
+O Lowpoint usa a API oficial de catálogo do Mercado Livre. É um projeto independente: não pertence à plataforma nem é aprovado por ela.
