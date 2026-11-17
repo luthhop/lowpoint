@@ -329,3 +329,48 @@ def test_complete_run_all_flat_gives_headlines():
     assert res.questions["P2"].headline == "não houve maquiagem"
     assert res.questions["P4"].headline == "sem padrão"  # tudo empate
     assert res.questions["P5"].headline == "não"        # os 18 ficaram parados
+
+
+# --- Emenda 3: Ref primeira observação (exploratória) --------------------------
+
+def _first_then_b0(first_price, b0_price, first_available=True):
+    first = Obs(at=(B0.start - timedelta(hours=2)).astimezone(timezone.utc), price=D("1.00"),
+                original_price=None, available=False)
+    second = Obs(at=(B0.start - timedelta(hours=1)).astimezone(timezone.utc), price=D(first_price),
+                 original_price=None, available=first_available)
+    return [first, second] + _hourly(B0.start, B0.end, b0_price)
+
+
+def test_first_obs_ref_dualsense_case_is_flagged():
+    f = metrics.first_obs_ref(_first_then_b0("380.00", "439.74"))
+    assert f.ref_first == D("380.00") and f.ref_b0 == D("439.74")
+    assert f.diff.quantize(D("0.0001")) == D("0.1572")
+    assert f.flagged
+
+
+def test_first_obs_ref_skips_unavailable_collections():
+    f = metrics.first_obs_ref(_first_then_b0("380.00", "439.74", first_available=False))
+    assert f.ref_first == D("439.74") and f.diff == 0 and not f.flagged
+    assert f.first_at == B0.start.astimezone(timezone.utc)
+
+
+@pytest.mark.parametrize("b0,flag", [("105.00", False), ("105.01", True), ("95.00", False), ("94.99", True)])
+def test_first_obs_ref_border_is_strict_5_percent_both_ways(b0, flag):
+    assert metrics.first_obs_ref(_first_then_b0("100.00", b0)).flagged is flag
+
+
+def test_first_obs_ref_without_data():
+    f = metrics.first_obs_ref([])
+    assert f.ref_first is None and f.ref_b0 is None and f.diff is None and not f.flagged
+
+
+def test_first_obs_ref_does_not_change_p1_p5():
+    """Emenda 3 é só exploratória: mesmas respostas com ou sem ela no resultado."""
+    s = _first_then_b0("380.00", "1000") + [o for o in _series() if not B0.contains(o.at)]
+    res = metrics.run_all(_dataset({p.catalog_id: s for p in prereg.PRODUCTS}), AFTER)
+    base = metrics.run_all(_dataset({p.catalog_id: _series() for p in prereg.PRODUCTS}), AFTER)
+    assert {q: (Q.status, Q.headline) for q, Q in res.questions.items()} == \
+           {q: (Q.status, Q.headline) for q, Q in base.questions.items()}
+    assert all(r.ref == D("1000") for r in res.b0_partial.values())
+    assert len(res.exploratory["ref_primeira"]) == 20
+    assert all(f.flagged for f in res.exploratory["ref_primeira"].values())

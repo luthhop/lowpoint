@@ -1,6 +1,6 @@
-"""Única fonte das regras da análise: transcrição do pré-registro v1 + Emendas 1 e 2.
+"""Única fonte das regras da análise: transcrição do pré-registro v1 + Emendas 1, 2 e 3.
 
-Documento: memoria/analise/plano-pre-registro.md (tag git pre-registro-v1, Emendas 1 e 2).
+Documento: memoria/analise/plano-pre-registro.md (tag git pre-registro-v1, Emendas 1, 2 e 3).
 Cada constante cita a seção de onde saiu. Nada aqui deve ser ajustado depois
 de ver os dados; mudança só por emenda datada no documento.
 """
@@ -103,6 +103,9 @@ MIN_COVERED = 12
 EMENDA1_START = datetime(2026, 11, 15, 9, 45, 29, tzinfo=BRT)
 # "Limitações › Produtos com histórico mais longo": sensibilidade exploratória.
 LONG_REF_WATCHES = (2, 4, 5)
+# "Emenda 3": exploratória "Ref primeira observação" (melhor oferta da 1ª coleta);
+# produto marcado quando |Ref B0 − Ref 1ª obs| / Ref 1ª obs > 5% (estrito).
+FIRST_OBS_FLAG = Decimal("0.05")
 
 
 @dataclass(frozen=True)

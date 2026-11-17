@@ -512,4 +512,27 @@ def _exploratory(data, obs, status, now) -> dict:
             item["P1b (Ref longa)"] = p1b_product(s, item["Ref longa"]).counts
             item["P2 (Ref longa)"] = p2_product(s, item["Ref longa"]).classification
         long_ref[p.label] = item
-    return {"deals_tags": deals, "ref_longa": long_ref}
+    first_obs = {p.watch_id: first_obs_ref(obs[p.catalog_id]) for p in prereg.PRODUCTS}
+    return {"deals_tags": deals, "ref_longa": long_ref, "ref_primeira": first_obs,
+            "ref_primeira_parcial": status["B0"] != "completa"}
+
+
+@dataclass(frozen=True)
+class FirstObsRef:
+    """Emenda 3 (exploratória): Ref B0 vs. preço da melhor oferta na 1ª coleta."""
+    first_at: datetime | None
+    ref_first: Decimal | None
+    ref_b0: Decimal | None
+    diff: Decimal | None      # (Ref B0 − Ref 1ª obs) / Ref 1ª obs
+    flagged: bool             # |diff| > FIRST_OBS_FLAG
+
+
+def first_obs_ref(obs) -> FirstObsRef:
+    valid = sorted((o for o in obs if o.available), key=lambda o: o.at)
+    first = valid[0] if valid else None
+    ref_b0 = reference(obs)
+    diff = None
+    if first is not None and ref_b0 is not None and first.price:
+        diff = (ref_b0 - first.price) / first.price
+    return FirstObsRef(first.at if first else None, first.price if first else None, ref_b0, diff,
+                       diff is not None and abs(diff) > prereg.FIRST_OBS_FLAG)

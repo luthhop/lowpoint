@@ -210,3 +210,21 @@ def test_report_after_dec_8_has_no_now_line(tmp_path, monkeypatch):
     assert len(product) == 20
     assert all("agora" not in lines and "agora" not in texts for _, lines, texts in product)
     assert all(lines.count("fronteira") == 3 for _, lines, _ in product)
+
+
+def test_report_has_first_obs_section(tmp_path):
+    """[TESTE] Emenda 3: tabela Ref B0 vs. Ref 1ª obs para os 20, no exploratório."""
+    now = datetime(2026, 11, 17, 19, 0, tzinfo=BRT)
+    data = _write_data(tmp_path, now)
+    out = tmp_path / "out"
+    assert report.main(["--no-export", "--data-dir", str(data), "--out", str(out)], now=now) == 0
+    text = (out / "relatorio.md").read_text(encoding="utf-8")
+    expl = text.split("## Exploratório")[1]
+    assert "Ref primeira observação (Emenda 3)" in expl
+    assert "Confirmatório" not in expl
+    section = expl.split("Ref primeira observação (Emenda 3)")[1]
+    rows = [l for l in section.splitlines() if l.startswith("| ") and l[2].isdigit()]
+    assert len(rows) == 20
+    assert all("R$ 100,00 | R$ 100,00 | 0,0% | não |" in r for r in rows)
+    assert "Marcados: 0 de 20." in section
+    assert "Ref B0 provisória" not in section

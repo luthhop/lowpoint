@@ -85,7 +85,7 @@ def _val(v) -> str:
 def render(res: metrics.Results, meta: dict, font_warning: str | None) -> str:
     L = []
     L.append("# Análise BF — \"Os descontos da Black Friday eram reais?\"\n")
-    L.append(f"- Gerado: {_dt(res.now)} BRT · pré-registro: `{prereg.DOC}` (tag `{prereg.TAG}`, + Emendas 1 e 2)")
+    L.append(f"- Gerado: {_dt(res.now)} BRT · pré-registro: `{prereg.DOC}` (tag `{prereg.TAG}`, + Emendas 1, 2 e 3)")
     L.append(f"- Regras: commit `{prereg.RULES_COMMIT}` · guarda: OK "
              f"({len(prereg.EXPECTED_THRESHOLDS)} limiares iguais; {', '.join(prereg.FROZEN_FILES)} igual ao commit)")
     if meta:
@@ -165,6 +165,22 @@ def render(res: metrics.Results, meta: dict, font_warning: str | None) -> str:
         sfx = " (parcial)" if it["parcial"] else ""
         L.append(f"| {label} | {_dt(it['desde'])} | {_brl(it['Ref longa'])}{sfx} | {_brl(it['Ref B0'])}{sfx} | "
                  f"{_val(it.get('P1b (Ref longa)'))} | {_val(it.get('P2 (Ref longa)'))} |")
+
+    L.append("\n### Sensibilidade: Ref primeira observação (Emenda 3)\n")
+    L.append("Ref primeira observação = preço da melhor oferta na primeira coleta de cada produto. "
+             "Diferença = (Ref B0 − Ref 1ª obs) / Ref 1ª obs. ⚠ = |diferença| > "
+             f"{_pct(prereg.FIRST_OBS_FLAG)}. Exploratória: não altera P1–P5 (a Ref continua a da B0).\n")
+    if res.exploratory["ref_primeira_parcial"]:
+        L.append("B0 ainda em andamento: Ref B0 provisória.\n")
+    L.append("| W | Produto | Grupo | 1ª coleta | Ref 1ª obs | Ref B0 | Diferença | > 5% |\n"
+             "|---|---|---|---|---|---|---|---|")
+    first = res.exploratory["ref_primeira"]
+    for p in prereg.PRODUCTS:
+        f = first[p.watch_id]
+        diff = "—" if f.diff is None else ("+" if f.diff > 0 else "") + _pct(f.diff)
+        L.append(f"| {p.watch_id} | {p.label} | {p.group} | {_dt(f.first_at)} | {_brl(f.ref_first)} | "
+                 f"{_brl(f.ref_b0)} | {diff} | {'⚠ sim' if f.flagged else 'não'} |")
+    L.append(f"\nMarcados: {sum(f.flagged for f in first.values())} de {len(prereg.PRODUCTS)}.")
     return "\n".join(L) + "\n"
 
 
