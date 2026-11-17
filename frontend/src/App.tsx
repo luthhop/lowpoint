@@ -146,7 +146,7 @@ const questions = [
 ];
 
 function LiveCallout() {
-  return <section className="live-callout section-pad" aria-labelledby="live-callout-title"><div className="container live-callout-inner" data-reveal><div><p className="eyebrow">Vitrine / Mercado Livre</p><h2 id="live-callout-title">Os preços reais, agora.</h2><p>20 produtos vigiados de hora em hora, com a referência de antes da Black Friday.</p></div><a className="button" href="/ao-vivo/">Ver a vitrine ao vivo<span className="link-arrow" aria-hidden="true">→</span></a></div></section>;
+  return <section className="live-callout section-pad" aria-labelledby="live-callout-title"><div className="container live-callout-inner" data-reveal><div><p className="eyebrow">Vitrine / preços reais</p><h2 id="live-callout-title">Os preços reais, agora.</h2><p>20 produtos vigiados de hora em hora, com a referência de antes da Black Friday.</p></div><a className="button" href="/ao-vivo/">Ver a vitrine ao vivo<span className="link-arrow" aria-hidden="true">→</span></a></div></section>;
 }
 
 function FAQ() {

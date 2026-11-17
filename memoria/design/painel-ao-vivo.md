@@ -55,7 +55,7 @@ Valores monetários como **string decimal** (decisão "nunca float"). Datas em I
 | `id` | catalog_product_id. Já é público: está na URL do ML. |
 | `nome` | Nome curto escrito por nós (lista do pré-registro). Nunca `watches.nickname`. |
 | `categoria` | As categorias de `memoria/analise-bf.md`. Os 3 produtos pessoais entram numa categoria comum (PS5 → Games; monitores → Celular e computador), para nada separar "os meus". Pilha e livro → "Controle". |
-| `preco_atual` | Último `price_history` com `available = true`. |
+| `preco_atual` | Último `price_history` com `available = true`; `null` (e `preco_atual_em` também) quando `disponivel = false` (Termos ML 5.2, 17/11). |
 | `disponivel` | `false` se a coleta mais recente do produto veio com `available = false` (ver Riscos). |
 | `poucas_ofertas` | `true` se a coleta mais recente teve < 3 ofertas (mesma regra do rodapé dos alertas). Usa só a contagem, nunca o anúncio nem o vendedor. |
 | `referencia` / `parcial` | Mediana da B0, com `parcial: true` até 17/11 14:50 BRT. Sem coletas na B0, vem `null`. |
@@ -106,15 +106,15 @@ Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=3600
 
 ### Estrutura da página
 
-1. **Cabeçalho:** "AO VIVO" (Archivo 900) + "20 produtos que o Lowpoint está vigiando no Mercado Livre." Abaixo, em Plex Mono Muted: "Última coleta: 15/11, 09:45." (de `ultima_coleta`).
+1. **Cabeçalho:** "AO VIVO" (Archivo 900) + "20 produtos que o Lowpoint está vigiando, atualizados de hora em hora." Abaixo, em Plex Mono Muted: "Última coleta: 15/11, 09:45 · atualiza de hora em hora (a cada 15 min de 23 a 27/11)." (de `ultima_coleta`).
 2. **Uma linha de aviso, sempre visível:** "Sem veredito ao vivo: o detector de pico precisa de 14 dias de histórico, e o veredito oficial sai na análise de dezembro."
 3. **Grade de 20 cartões (small multiples)**, agrupados por categoria (título pequeno da categoria acima de cada grupo). Cada cartão tem:
-   - nome (Libre Franklin 600) e link discreto "ver no ML";
+   - nome (Libre Franklin 600) e link discreto "ver anúncio";
    - mini-gráfico em degraus (série de 3h), linha Ink, linha da Referência tracejada em Muted e a faixa da BF levemente marcada com o rótulo "BF" (Plex Mono 9px, #666, no topo; 12px reservados no alto da escala para nenhuma linha passar por cima), **com o mesmo eixo de tempo em todos os cartões** (14/11 → 28/11 00:00 até a BF acabar; depois 14/11 → 08/12) e o eixo de preço próprio de cada produto;
    - preço atual (Plex Mono 700);
    - "−7,2% vs referência" (Plex Mono 500), sempre com sinal e com palavra, não só cor;
    - até 17/11 14:50 (Referência parcial), "referência fecha em 17/11" no lugar do percentual;
-   - estados especiais: "sem oferta nova na última coleta" e "poucos vendedores" (ver Riscos).
+   - estados especiais: "indisponível agora" e "poucos vendedores" (ver Riscos).
 4. **Nota de método** (rodapé, 3–4 linhas): "Preço = melhor oferta nova do catálogo, coletada de hora em hora (a cada 15 min de 23 a 27/11) e mostrada em blocos de 3h. Referência = mediana de 14/11 14:50 a 17/11 14:50. As regras da análise foram registradas antes da Black Friday: [pré-registro v1](https://github.com/luthhop/lowpoint/blob/pre-registro-v1/memoria/analise/plano-pre-registro.md) · [emendas](https://github.com/luthhop/lowpoint/blob/main/memoria/analise/plano-pre-registro.md#emendas)."
    - O link da tag mostra o texto congelado **sem** as Emendas 1 e 2, por isso o segundo link aponta para o `main`.
 
@@ -133,7 +133,7 @@ Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=3600
 
 - **Custo no Neon:** limitado pelo cache (≤ 24–48 consultas/dia), pelo bloqueio de query string e pelo memo na instância. O ponto de atenção é o compute (acordar o banco), não o armazenamento. Conferir as horas de compute no painel do Neon na primeira semana. Se ficar caro, o plano B é o coletor gerar o JSON a cada coleta e publicar como arquivo estático, com zero leitura do banco pela web.
 - **Coleta falhou:** a página mostra sempre "Última coleta: dd/mm, hh:mm". Se `ultima_coleta` tiver mais de 90 min (o mesmo limite do aviso de atraso do tick), `coleta_atrasada: true` e aparece a linha "A coleta está atrasada; os preços abaixo são de dd/mm, hh:mm." Nunca dar a entender que o dado é fresco. Se o endpoint falhar: "Não deu para carregar os preços agora." Sem dado inventado e sem cache local antigo apresentado como atual.
-- **Produto sem oferta:** se a última coleta veio `available = false`, o cartão mostra o último preço com data ("R$ 3.699 em 15/11, 08:45"), o texto "sem oferta nova na última coleta" em Muted e o % vs referência como "—". A TV TCL (~1,2 oferta/coleta) e o iPhone (2 vendedores) são os candidatos; até hoje nenhuma coleta deles veio indisponível. Com < 3 ofertas aparece "poucos vendedores", como no bot.
+- **Produto sem oferta** (Termos ML 5.2, 17/11): se a última coleta veio `available = false`, o cartão mostra só o nome, "indisponível agora" e o link "ver anúncio": sem valor, sem percentual e sem mini-gráfico. A API devolve `preco_atual`, `preco_atual_em` e `vs_referencia_pct` como `null`. Com < 3 ofertas aparece "poucos vendedores", como no bot.
 - **Mobile:** 20 cartões numa coluna dão uma rolagem longa. Proposta: 2 colunas a partir de 360px, cartão compacto (mini-gráfico ~140×44px, preço e %), sem rótulos de eixo no mini-gráfico (a nota de método explica a escala). Desktop: 4 colunas. Payload: ~3.800 pontos, ~120 KB de JSON cru, ~25 KB com gzip. Dá para encurtar (epoch em segundos) se pesar.
 - **Leitura como veredito:** a cor e o "% vs referência" podem ser lidos como "promoção boa". Mitigação: a linha de aviso fixa e a ausência de palavras de veredito.
 - **Privacidade:** a allowlist de 20 impede que um watch pessoal novo apareça. Os 3 pessoais ficam indistinguíveis (categoria comum, sem "grupo"). O teste de chaves proibidas roda a cada deploy.

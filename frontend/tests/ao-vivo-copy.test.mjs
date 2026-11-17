@@ -17,7 +17,6 @@ test('[TESTE] /ao-vivo tem os textos aprovados', () => {
     'Sem veredito ao vivo: o detector de pico precisa de 14 dias de histórico, e o veredito oficial sai na análise de dezembro.',
     'Última coleta:',
     'A coleta está atrasada; os preços abaixo são de',
-    'sem oferta nova na última coleta',
     'poucos vendedores',
     'Não deu para carregar os preços agora.',
     'https://github.com/luthhop/lowpoint/blob/pre-registro-v1/memoria/analise/plano-pre-registro.md',
@@ -48,4 +47,12 @@ test('[TESTE] mini-gráfico tem o rótulo "BF" em Plex Mono ~9px, cor #666', () 
   assert.match(rule[1], /font-family:var\(--mono\)/);
   assert.match(rule[1], /font-size:9px/);
   assert.match(rule[1], /color:var\(--muted\)/);
+});
+
+test('[TESTE] cartão indisponível não renderiza preço, percentual nem gráfico', () => {
+  assert.ok(!page.includes('sem oferta nova na última coleta'), 'linha com o último preço removida');
+  const card = page.match(/function Card[\s\S]*?\r?\n}\r?\n/)[0];
+  assert.ok(read('src/lib/painel.mjs').includes("status: 'indisponível agora'"));
+  assert.match(card, /cardView\(/);
+  assert.match(card, /v\.state === 'indisponivel'/);
 });

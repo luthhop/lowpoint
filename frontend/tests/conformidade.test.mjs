@@ -39,3 +39,24 @@ test('[TESTE] landing: textos neutros aprovados', () => {
   ]) assert.ok(app.includes(t), t);
   assert.ok(read('index.html').includes('Monitoramento de preços com histórico, veredito no Telegram.'));
 });
+
+test('[TESTE] /ao-vivo: nome da plataforma só no aviso 4.1 do rodapé', () => {
+  assertConforme('src/ao-vivo/AoVivo.tsx', { footer: true });
+  const footer = read('src/ao-vivo/AoVivo.tsx').match(/<footer className="site-footer[\s\S]*?<\/footer>/)[0];
+  assert.ok(footer.includes(AVISO_41), 'aviso dentro do <footer>');
+});
+
+test('[TESTE] /ao-vivo: metadados sem o nome da plataforma e com a frequência', () => {
+  assertConforme('ao-vivo/index.html', { footer: false });
+  const html = read('ao-vivo/index.html');
+  assert.match(html, /name="description" content="[^"]*de hora em hora/);
+  assert.match(html, /property="og:description" content="[^"]*de hora em hora/);
+});
+
+test('[TESTE] /ao-vivo: frequência de atualização junto dos preços (5.3)', () => {
+  const page = read('src/ao-vivo/AoVivo.tsx');
+  assert.ok(page.includes('atualiza de hora em hora (a cada 15 min de 23 a 27/11)'));
+  assert.ok(page.includes('20 produtos que o Lowpoint está vigiando, atualizados de hora em hora.'));
+  assert.ok(page.includes('>ver anúncio<'));
+  assert.ok(read('src/App.tsx').includes('Vitrine / preços reais'));
+});

@@ -155,16 +155,27 @@ def test_series_is_last_available_price_per_3h_block_from_b0():
     assert prod["serie"] == [["2026-11-14T17:50:00Z", "10.00"], ["2026-11-14T18:00:00Z", "21.00"]]
 
 
-def test_unavailable_latest_collection_keeps_last_price_and_no_pct():
+def test_unavailable_latest_collection_hides_last_price():
+    """[TESTE] Termos ML 5.2: sem oferta disponível, o JSON público não traz o último preço."""
     ps5 = prereg.PRODUCTS[0].catalog_id
     rows = _rows(prereg.W["B0"].start, NOW - timedelta(hours=1), "100.00")
-    last_ok = rows[-1].at
     rows.append(PriceRow(at=(NOW - timedelta(minutes=30)).astimezone(UTC), price=Decimal("0"), available=False))
     prod = next(x for x in _payload(extra={ps5: rows})["produtos"] if x["id"] == ps5)
     assert prod["disponivel"] is False
-    assert prod["preco_atual"] == "100.00"
-    assert prod["preco_atual_em"] == last_ok.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert prod["preco_atual"] is None
+    assert prod["preco_atual_em"] is None
     assert prod["vs_referencia_pct"] is None
+    assert prod["referencia"] == "100.00"  # a Referência é da B0, não é preço atual
+
+
+def test_available_again_shows_price():
+    ps5 = prereg.PRODUCTS[0].catalog_id
+    rows = _rows(prereg.W["B0"].start, NOW - timedelta(hours=2), "100.00")
+    rows.append(PriceRow(at=(NOW - timedelta(minutes=90)).astimezone(UTC), price=Decimal("0"), available=False))
+    rows.append(PriceRow(at=(NOW - timedelta(minutes=30)).astimezone(UTC), price=Decimal("95.00"), available=True))
+    prod = next(x for x in _payload(extra={ps5: rows})["produtos"] if x["id"] == ps5)
+    assert prod["disponivel"] is True and prod["preco_atual"] == "95.00"
+    assert prod["vs_referencia_pct"] is not None
 
 
 def test_product_without_any_data_is_listed_with_nulls():

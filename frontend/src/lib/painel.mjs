@@ -47,6 +47,19 @@ export function pctLabel(produto, referencia) {
   return formatPct(produto.disponivel ? produto.vs_referencia_pct : null);
 }
 
+// O que o cartão mostra. Termos ML 5.2: produto sem oferta disponível não mostra
+// o último preço; só o nome, "indisponível agora" e o link (sem valor, sem
+// percentual, sem gráfico), mesmo que um JSON antigo ainda traga preco_atual.
+export function cardView(produto, referencia) {
+  if (!produto.disponivel || produto.preco_atual === null) {
+    return { state: 'indisponivel', price: null, pct: null, spark: false, status: 'indisponível agora', fewOffers: false };
+  }
+  return {
+    state: 'ok', price: formatBRL(produto.preco_atual), pct: pctLabel(produto, referencia),
+    spark: true, status: null, fewOffers: Boolean(produto.poucas_ofertas),
+  };
+}
+
 export function groupByCategory(produtos) {
   const groups = [];
   for (const p of produtos) {

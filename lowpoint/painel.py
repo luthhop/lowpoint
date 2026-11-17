@@ -100,8 +100,9 @@ def _product(p: prereg.Product, rows: list[PriceRow], offer_count: int | None) -
         "nome": p.label,
         "categoria": CATEGORY[p.catalog_id],
         "url": ML_CATALOG_URL.format(p.catalog_id),
-        "preco_atual": _money(current.price) if current else None,
-        "preco_atual_em": _iso(current.at) if current else None,
+        # Termos ML 5.2: sem oferta disponível agora, não publica o último preço.
+        "preco_atual": _money(current.price) if (disponivel and current) else None,
+        "preco_atual_em": _iso(current.at) if (disponivel and current) else None,
         "disponivel": disponivel,
         "poucas_ofertas": offer_count is not None and offer_count < FEW_OFFERS,
         "referencia": _money(ref),

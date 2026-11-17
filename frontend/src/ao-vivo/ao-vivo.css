@@ -11,9 +11,9 @@
 .live-card{border:1px solid #999;border-radius:0;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .live-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .live-card h3{margin:0;font-size:15px;line-height:1.3;font-weight:600}
-.live-ml{font-size:11px;text-transform:uppercase;white-space:nowrap;color:var(--muted)}
-.live-ml .link-arrow{margin-left:4px}
-.live-ml:hover{color:var(--ink);text-decoration:underline}
+.live-link{font-size:11px;text-transform:uppercase;white-space:nowrap;color:var(--muted)}
+.live-link .link-arrow{margin-left:4px}
+.live-link:hover{color:var(--ink);text-decoration:underline}
 .live-spark-wrap{position:relative;margin:10px 0 6px}
 .live-spark{display:block;width:100%;height:44px}
 .live-spark-bf-label{position:absolute;top:2px;text-align:center;font-family:var(--mono);font-size:9px;line-height:1;letter-spacing:.04em;color:var(--muted);pointer-events:none}
@@ -22,6 +22,7 @@
 .live-spark-line{fill:none;stroke:var(--ink);stroke-width:1.5}
 .live-price{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
 .live-pct{margin:0;font-size:13px}
+.live-off{margin:12px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
 .live-flag{margin:0;font-size:11px;line-height:1.5;color:var(--muted)}
 .live-method{margin-top:72px;padding-top:24px;border-top:1px solid var(--ink);max-width:760px;font-size:14px;line-height:1.6;color:var(--muted)}
 .live-method .eyebrow{color:var(--ink);margin:0 0 8px}

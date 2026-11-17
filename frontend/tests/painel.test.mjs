@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  formatPct, formatBRL, formatWhen, groupByCategory, sparkline, DOMAIN, BF_WINDOW, domainFor, pctLabel, bfLabel,
+  formatPct, formatBRL, formatWhen, groupByCategory, sparkline, DOMAIN, BF_WINDOW, domainFor, pctLabel, bfLabel, cardView,
 } from '../src/lib/painel.mjs';
 
 test('[TESTE] % vs referência sempre com sinal e palavra (sinal tipográfico, vírgula)', () => {
@@ -98,4 +98,24 @@ test('[TESTE] margem no topo: linha e referência nunca entram na área do rótu
   assert.ok(s.refY >= 12, `refY=${s.refY}`);
   const ys = [...s.path.matchAll(/(?:M[\d.]+ |V )([\d.]+)/g)].map(m => Number(m[1]));
   assert.ok(ys.length >= 2 && ys.every(y => y >= 12 && y <= 44), ys.join(','));
+});
+
+const REF_OK = { parcial: false, fim: '2026-11-17T17:50:00.000Z' };
+const base = { nome: 'PS5', url: 'u', referencia: '100.00', serie: [['2026-11-15T12:00:00Z', '100.00']], poucas_ofertas: false };
+
+test('[TESTE] cartão disponível: preço, percentual e gráfico', () => {
+  const v = cardView({ ...base, disponivel: true, preco_atual: '93.00', vs_referencia_pct: '-7.0' }, REF_OK);
+  assert.deepEqual(v, { state: 'ok', price: 'R$ 93,00', pct: '−7,0% vs referência', spark: true, status: null, fewOffers: false });
+});
+
+test('[TESTE] cartão indisponível (5.2): só "indisponível agora", sem valor, % ou gráfico', () => {
+  // Mesmo que um JSON antigo em cache ainda traga o último preço, o cartão não mostra.
+  const v = cardView({ ...base, disponivel: false, preco_atual: '100.00', vs_referencia_pct: '0.0', poucas_ofertas: true }, REF_OK);
+  assert.deepEqual(v, { state: 'indisponivel', price: null, pct: null, spark: false, status: 'indisponível agora', fewOffers: false });
+});
+
+test('[TESTE] cartão sem dados ainda', () => {
+  const v = cardView({ ...base, serie: [], disponivel: false, preco_atual: null, vs_referencia_pct: null }, REF_OK);
+  assert.equal(v.state, 'indisponivel');
+  assert.equal(v.price, null);
 });

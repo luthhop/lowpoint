@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { bfLabel, formatBRL, formatWhen, groupByCategory, pctLabel, sparkline } from '../lib/painel.mjs';
+import { bfLabel, cardView, formatBRL, formatWhen, groupByCategory, sparkline } from '../lib/painel.mjs';
 
 // Contrato de GET /api/painel (memoria/design/painel-ao-vivo.md). Preços em string decimal.
 type Produto = {
@@ -48,15 +48,17 @@ function Spark({ p, now }: { p: Produto; now: number }) {
 }
 
 function Card({ p, referencia, now }: { p: Produto; referencia: Painel['referencia']; now: number }) {
-  const semOferta = !p.disponivel && p.preco_atual !== null;
+  const v = cardView(p, referencia);
+  const head = <header className="live-card-head"><h3>{p.nome}</h3><External className="live-link mono" href={p.url}>ver anúncio</External></header>;
+  if (v.state === 'indisponivel') {
+    return <article className="live-card live-card--off">{head}<p className="live-off mono">{v.status}</p></article>;
+  }
   return <article className="live-card">
-    <header className="live-card-head"><h3>{p.nome}</h3><External className="live-ml mono" href={p.url}>ver no ML</External></header>
+    {head}
     <Spark p={p} now={now} />
-    <p className="live-price mono">{formatBRL(p.preco_atual)}</p>
-    <p className="live-pct mono">{pctLabel(p, referencia)}</p>
-    {semOferta && p.preco_atual_em && <p className="live-flag mono">sem oferta nova na última coleta · {formatBRL(p.preco_atual)} em {formatWhen(p.preco_atual_em)}</p>}
-    {p.preco_atual === null && <p className="live-flag mono">sem dados ainda</p>}
-    {p.poucas_ofertas && <p className="live-flag mono">poucos vendedores</p>}
+    <p className="live-price mono">{v.price}</p>
+    <p className="live-pct mono">{v.pct}</p>
+    {v.fewOffers && <p className="live-flag mono">poucos vendedores</p>}
   </article>;
 }
 
@@ -64,7 +66,7 @@ function Body({ data }: { data: Painel }) {
   const last = data.ultima_coleta ? formatWhen(data.ultima_coleta) : '—';
   const now = Date.parse(data.gerado_em); // hora do servidor: o eixo segue o mesmo JSON em cache
   return <>
-    <p className="live-meta mono">Última coleta: {last}.</p>
+    <p className="live-meta mono">Última coleta: {last} · atualiza de hora em hora (a cada 15 min de 23 a 27/11).</p>
     {data.coleta_atrasada && <p className="live-late mono" role="status">A coleta está atrasada; os preços abaixo são de {last}.</p>}
     {(groupByCategory(data.produtos) as Grupo[]).map(g => <section key={g.categoria} className="live-group" aria-label={g.categoria}>
       <h2 className="live-group-title eyebrow">{g.categoria}</h2>
@@ -91,7 +93,7 @@ export default function AoVivo() {
       <div className="live-head">
         <p className="eyebrow">Vitrine / preços reais</p>
         <h1>Ao vivo</h1>
-        <p className="live-lede">20 produtos que o Lowpoint está vigiando no Mercado Livre.</p>
+        <p className="live-lede">20 produtos que o Lowpoint está vigiando, atualizados de hora em hora.</p>
       </div>
       <p className="live-notice">Sem veredito ao vivo: o detector de pico precisa de 14 dias de histórico, e o veredito oficial sai na análise de dezembro.</p>
       {state.status === 'carregando' && <p className="live-meta mono" role="status">Carregando os preços…</p>}
@@ -103,6 +105,6 @@ export default function AoVivo() {
         <p>As regras da análise foram registradas antes da Black Friday: <External href={PREREG_TAG}>pré-registro v1</External> · <External href={PREREG_EMENDAS}>emendas</External>.</p>
       </footer>
     </main>
-    <footer className="site-footer dark"><div className="container footer-inner"><a href="/" aria-label="Voltar ao início"><Wordmark /></a><span className="mono">Dados do Mercado Livre · sem vínculo com o Mercado Livre</span><External className="mono" href={REPOSITORY}>GitHub</External></div></footer>
+    <footer className="site-footer dark"><div className="container footer-inner"><a href="/" aria-label="Voltar ao início"><Wordmark /></a><span className="mono footer-notice">O Lowpoint usa a API oficial de catálogo do Mercado Livre. É um projeto independente: não pertence à plataforma nem é aprovado por ela.</span><External className="mono" href={REPOSITORY}>GitHub</External></div></footer>
   </>;
 }
