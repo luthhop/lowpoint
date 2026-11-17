@@ -4,7 +4,8 @@
 - 20 watches ativos (PS5, LG 27", AOC 27" + 17 silenciosos de análise, memoria/analise-bf.md). 0 maquiado enviado em produção
 - Tick ATIVO: cron externo :45 → /api/tick → workflow_dispatch + aviso se coleta >90 min. Vigiar: scripts/audit_collections.py --hours N
 ## Análise BF
-- Pré-registro v1 (tag pre-registro-v1) + Emendas 1 (deal_ids+tags desde 15/11 09:45:29) e 2 (P5, cobertura, P3 nos 18)
+- Pré-registro v1 (tag pre-registro-v1) + Emendas 1 (deal_ids+tags desde 15/11 09:45:29), 2 (P5, cobertura, P3 nos 18) e 3 (17/11 19:47: exploratória Ref 1ª obs vs Ref B0)
+- B0 fechada 17/11 14:50. Ref 1ª obs: 2 de 20 marcados (>5%): DualSense +15,7% (R$ 380 → 439,74), LG 27" −5,1%
 - Código em analysis/ (python -m analysis.report; deps em requirements-analysis.txt); gráficos de publicação no main (d93d044)
 ## Web
 - Landing publicada: https://lowpoint-web.vercel.app (projeto lowpoint-web, raiz frontend). Vitrine + beta por convite
