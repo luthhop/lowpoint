@@ -138,3 +138,9 @@ Formato: `### Emenda N — dd/mm/aaaa` + o que mudou + motivo + se afeta alguma 
   - A manchete só é calculada com **≥ 12 dos 18** cobertos; abaixo disso, "incompleto".
 - **P3**: a base é a mesma dos 18 não-controle (denominador: os que tiveram riscado na BF). Os controles ficam no P5.
 - **Efeito**: nenhuma resposta já calculada (não havia nenhuma).
+
+### Emenda 3 — 17/11/2026 19:47 BRT
+
+- **O que mudou**: só **adiciona uma análise exploratória** (seção "Exploratório" do relatório), para os 20 produtos: "Ref primeira observação" = preço da melhor oferta (`price_history.price`, `available = true`) na primeira coleta de cada produto. Mostrada lado a lado com a `Ref` da B0, com a diferença `(Ref B0 − Ref primeira observação) / Ref primeira observação` em %. Produto marcado quando |diferença| > 5%.
+- **Motivo**: a B0 do DualSense Cobalt (watch 19) ficou inflada, como previsto em "Limitações › A B0 pode já estar inflada": R$ 380 em 14/11 e `Ref` da B0 = R$ 439,74, ~16% acima do primeiro preço observado.
+- **Efeito**: **não altera P1–P5**. A `Ref` continua sendo a mediana da B0; métricas, janelas, limiares, produtos, coletas usadas e o commit das regras continuam os da v1 + Emendas 1 e 2. Nenhuma resposta de P1–P5 foi calculada (sem dado da BF; B0 fechada às 14:50 de hoje).
