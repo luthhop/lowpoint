@@ -149,10 +149,12 @@ def test_series_is_last_available_price_per_3h_block_from_b0():
         PriceRow(b0.astimezone(UTC), Decimal("10"), True),                                           # bloco 12–15h
         PriceRow(datetime(2026, 11, 14, 15, 10, tzinfo=BRT).astimezone(UTC), Decimal("20"), True),  # bloco 15–18h
         PriceRow(datetime(2026, 11, 14, 16, 10, tzinfo=BRT).astimezone(UTC), Decimal("21"), True),
-        PriceRow(datetime(2026, 11, 14, 17, 10, tzinfo=BRT).astimezone(UTC), Decimal("0"), False),  # indisponível
+        PriceRow(datetime(2026, 11, 14, 17, 10, tzinfo=BRT).astimezone(UTC), Decimal("0"), False),  # indisponível no meio
+        PriceRow(datetime(2026, 11, 14, 18, 10, tzinfo=BRT).astimezone(UTC), Decimal("30"), True),  # bloco 18–21h
     ]
     prod = next(x for x in _payload(extra={ps5: rows})["produtos"] if x["id"] == ps5)
-    assert prod["serie"] == [["2026-11-14T17:50:00Z", "10.00"], ["2026-11-14T18:00:00Z", "21.00"]]
+    assert prod["serie"] == [["2026-11-14T17:50:00Z", "10.00"], ["2026-11-14T18:00:00Z", "21.00"],
+                             ["2026-11-14T21:00:00Z", "30.00"]]
 
 
 def test_unavailable_latest_collection_hides_last_price():
@@ -166,6 +168,17 @@ def test_unavailable_latest_collection_hides_last_price():
     assert prod["preco_atual_em"] is None
     assert prod["vs_referencia_pct"] is None
     assert prod["referencia"] == "100.00"  # a Referência é da B0, não é preço atual
+    assert prod["serie"] == []  # o último ponto da série seria o último preço
+
+
+def test_unavailable_body_has_no_price_besides_reference():
+    """[TESTE] Termos ML 5.2: nenhum valor de preço do produto indisponível no JSON além da Referência."""
+    ps5 = prereg.PRODUCTS[0].catalog_id
+    rows = _rows(prereg.W["B0"].start, NOW - timedelta(hours=1), "123.45")
+    rows[-1] = PriceRow(at=rows[-1].at, price=Decimal("111.11"), available=True)
+    rows.append(PriceRow(at=(NOW - timedelta(minutes=30)).astimezone(UTC), price=Decimal("0"), available=False))
+    prod = next(x for x in _payload(extra={ps5: rows})["produtos"] if x["id"] == ps5)
+    assert "111.11" not in json.dumps(prod)
 
 
 def test_available_again_shows_price():

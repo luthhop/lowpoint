@@ -61,7 +61,7 @@ Valores monetários como **string decimal** (decisão "nunca float"). Datas em I
 | `referencia` / `parcial` | Mediana da B0, com `parcial: true` até 17/11 14:50 BRT. Sem coletas na B0, vem `null`. |
 | `vs_referencia_pct` | `(preço_atual − ref) / ref`, uma casa decimal, **truncado em direção a zero** para nunca exagerar (mesma lógica do floor de 05/11). `null` sem referência ou sem oferta. |
 | `faixa` | `abaixo` se ≤ −5,0%; `acima` se ≥ +10,0%; senão `neutra`. É calculada no servidor, para cor e texto saírem da mesma regra. |
-| `serie` | Desde 14/11 14:50 (B0) para todos, inclusive os que têm histórico antes disso. Último preço disponível de cada bloco de 3h alinhado a 00/03/06…/21h BRT. "Último" e não "mínimo": o mínimo exageraria quedas relâmpago. Até 08/12 são ~190 pontos por produto. |
+| `serie` | Desde 14/11 14:50 (B0) para todos, inclusive os que têm histórico antes disso. Último preço disponível de cada bloco de 3h alinhado a 00/03/06…/21h BRT. "Último" e não "mínimo": o mínimo exageraria quedas relâmpago. Até 08/12 são ~190 pontos por produto. Lista vazia quando `disponivel = false` (Termos ML 5.2, 17/11). |
 
 **Nunca expor** (o servidor monta o JSON campo a campo, sem serializar modelo): alvo (`target_price`), `chat_id`, `seller_id`, `item_id`, `silent`, `nickname`, `group`/"pessoal", `watch_id`, alertas, tokens. Um teste compara as chaves do JSON com uma lista permitida e procura os nomes proibidos no corpo.
 

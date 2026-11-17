@@ -107,7 +107,8 @@ def _product(p: prereg.Product, rows: list[PriceRow], offer_count: int | None) -
         "poucas_ofertas": offer_count is not None and offer_count < FEW_OFFERS,
         "referencia": _money(ref),
         "vs_referencia_pct": pct,
-        "serie": _series(rows),
+        # Idem: o último ponto da série seria o último preço; indisponível = lista vazia.
+        "serie": _series(rows) if disponivel else [],
     }
 
 
