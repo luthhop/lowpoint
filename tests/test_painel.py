@@ -313,6 +313,68 @@ def test_db_error_is_503_no_store_without_details():
     assert b"secret-host" not in body
 
 
+def test_db_error_503_has_cors_so_the_site_can_read_the_status():
+    def boom():
+        raise RuntimeError("x")
+    _, headers, _ = painel.handle_painel("GET", "/api/painel", now=NOW, fetch=boom)
+    assert headers["Access-Control-Allow-Origin"] == "https://lowpoint-web.vercel.app"
+
+
+class FlakyFetch(CountingFetch):
+    """Funciona na 1ª chamada e falha nas seguintes (Neon caiu depois)."""
+    def __call__(self):
+        self.calls += 1
+        if self.calls > 1:
+            raise RuntimeError("connection to server at secret-host failed")
+        return _data()
+
+
+@pytest.mark.parametrize("method", ["GET", "HEAD"])
+def test_db_error_serves_last_good_payload(method):
+    fetch = FlakyFetch()
+    _, _, good = painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)
+    later = NOW + timedelta(minutes=30)  # memo vencido: tenta o banco e falha
+    status, headers, body = painel.handle_painel(method, "/api/painel", now=later, fetch=fetch)
+    assert status == 200 and fetch.calls == 2
+    assert body == (b"" if method == "HEAD" else good)  # mesmo JSON, com o gerado_em antigo
+    # cache curto: volta a tentar o banco logo, sem a CDN segurar o antigo por 1h
+    assert headers["Cache-Control"] == painel.CACHE_STALE == "public, max-age=60, s-maxage=60"
+    assert headers["Access-Control-Allow-Origin"] == "https://lowpoint-web.vercel.app"
+    assert b"secret-host" not in body
+
+
+def test_stale_fallback_does_not_refresh_memo_and_retries_db():
+    fetch = FlakyFetch()
+    painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)
+    painel.handle_painel("GET", "/api/painel", now=NOW + timedelta(minutes=30), fetch=fetch)
+    painel.handle_painel("GET", "/api/painel", now=NOW + timedelta(minutes=31), fetch=fetch)
+    assert fetch.calls == 3  # cada pedido com memo vencido tenta o banco de novo
+
+
+def test_stale_fallback_then_recovery_serves_fresh_payload():
+    fetch = FlakyFetch()
+    painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)
+    painel.handle_painel("GET", "/api/painel", now=NOW + timedelta(minutes=30), fetch=fetch)
+    fetch.calls = 0  # banco voltou
+    recovered = NOW + timedelta(minutes=31)
+    status, headers, body = painel.handle_painel("GET", "/api/painel", now=recovered, fetch=fetch)
+    assert status == 200 and headers["Cache-Control"] == painel.CACHE_OK
+    assert json.loads(body)["gerado_em"] == recovered.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def test_db_error_without_any_good_payload_is_still_503():
+    def boom():
+        raise RuntimeError("x")
+    assert painel.handle_painel("GET", "/api/painel", now=NOW, fetch=boom)[0] == 503
+
+
+def test_off_switch_wins_over_stale_payload(monkeypatch):
+    fetch = FlakyFetch()
+    painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)
+    monkeypatch.setenv("PAINEL_ENABLED", "false")
+    assert painel.handle_painel("GET", "/api/painel", now=NOW + timedelta(minutes=30), fetch=fetch)[0] == 404
+
+
 def test_memo_avoids_second_db_hit_within_5_minutes():
     fetch = CountingFetch()
     painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)

@@ -23,6 +23,7 @@ BLOCK = timedelta(hours=3)
 MEMO_TTL = timedelta(minutes=5)
 FEW_OFFERS = 3  # mesma regra do rodapé "poucos vendedores" dos alertas
 CACHE_OK = "public, max-age=300, s-maxage=3600, stale-while-revalidate=3600"
+CACHE_STALE = "public, max-age=60, s-maxage=60"  # último JSON bom servido após falha do banco
 DEFAULT_ORIGIN = "https://lowpoint-web.vercel.app"
 ML_CATALOG_URL = "https://www.mercadolivre.com.br/p/{}"
 
@@ -209,6 +210,7 @@ def handle_painel(method: str, path: str, *, now: datetime | None = None,
         # acertaria o Neon: recusada antes de qualquer consulta.
         return 400, {**base, "Cache-Control": "no-store"}, _json({"erro": "sem parâmetros"})
 
+    cache = CACHE_OK
     if _memo and now - _memo["at"] < MEMO_TTL:
         body = _memo["body"]
     else:
@@ -216,8 +218,14 @@ def handle_painel(method: str, path: str, *, now: datetime | None = None,
             body = _json(build_payload(fetch(), now))
         except Exception:
             log.exception("painel: falha ao montar o payload")
-            return 503, {**base, "Cache-Control": "no-store"}, _json({"erro": "indisponível"})
-        _memo.update(at=now, body=body)
+            if not _memo:
+                return 503, {**base, **cors, "Cache-Control": "no-store"}, _json({"erro": "indisponível"})
+            # Último JSON bom desta instância (gerado_em diz de quando é). Cache
+            # curto e sem renovar o memo: o próximo pedido tenta o banco de novo.
+            log.warning("painel: servindo o último payload bom (%s)", _memo["at"].isoformat())
+            body, cache = _memo["body"], CACHE_STALE
+        else:
+            _memo.update(at=now, body=body)
 
-    headers = {**base, "Cache-Control": CACHE_OK, **cors}
+    headers = {**base, "Cache-Control": cache, **cors}
     return 200, headers, b"" if method == "HEAD" else body

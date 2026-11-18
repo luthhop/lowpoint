@@ -5,15 +5,37 @@
 // responde 404. O site não tem a env; decide pelo status da resposta.
 export const OFF_MESSAGE = 'Vitrine fora do ar no momento.';
 
-export async function loadPainel(fetchFn, url) {
+// Uma falha passageira (Neon acordando, instância nova) não vira mensagem de
+// erro de cara: espera RETRY_DELAY_MS e tenta mais uma vez. Cada falha vai
+// para o console com o status HTTP, para dar para diagnosticar depois.
+export const RETRY_DELAY_MS = 3000;
+const ATTEMPTS = 2;
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function attempt(fetchFn, url) {
+  let r;
   try {
-    const r = await fetchFn(url);
-    if (r.status === 404) return { status: 'fora' };
-    if (!r.ok) return { status: 'erro' };
-    return { status: 'ok', data: await r.json() };
-  } catch {
-    return { status: 'erro' };
+    r = await fetchFn(url);
+  } catch (e) {
+    return { status: 'erro', why: `falha de rede/CORS: ${e?.message ?? e}` };
   }
+  if (r.status === 404) return { status: 'fora' };
+  if (!r.ok) return { status: 'erro', why: `HTTP ${r.status}` };
+  try {
+    return { status: 'ok', data: await r.json() };
+  } catch (e) {
+    return { status: 'erro', why: `HTTP ${r.status}, JSON inválido: ${e?.message ?? e}` };
+  }
+}
+
+export async function loadPainel(fetchFn, url, { sleep = wait, log = console.warn } = {}) {
+  for (let i = 1; i <= ATTEMPTS; i++) {
+    const res = await attempt(fetchFn, url);
+    if (res.status !== 'erro') return res;
+    log(`[painel] GET ${url} falhou: ${res.why} (tentativa ${i}/${ATTEMPTS})`);
+    if (i < ATTEMPTS) await sleep(RETRY_DELAY_MS);
+  }
+  return { status: 'erro' };
 }
 
 // Landing: só mostra o bloco-chamada com o painel no ar. HEAD não baixa o JSON.
