@@ -231,6 +231,50 @@ def _clear_memo():
     painel.clear_memo()
 
 
+@pytest.fixture(autouse=True)
+def _painel_on(monkeypatch):
+    """Os testes de contrato rodam com o interruptor ligado; os de desligado limpam a env."""
+    monkeypatch.setenv("PAINEL_ENABLED", "true")
+
+
+# --- Interruptor PAINEL_ENABLED ---------------------------------------------------------
+
+@pytest.mark.parametrize("value", [None, "", "false", "0", "TRUE", "True", " true", "yes"])
+@pytest.mark.parametrize("method", ["GET", "HEAD", "POST"])
+def test_off_is_404_without_touching_the_db(monkeypatch, value, method):
+    if value is None:
+        monkeypatch.delenv("PAINEL_ENABLED", raising=False)
+    else:
+        monkeypatch.setenv("PAINEL_ENABLED", value)
+    fetch = CountingFetch()
+    status, headers, body = painel.handle_painel(method, "/api/painel", now=NOW, fetch=fetch)
+    assert status == 404 and fetch.calls == 0
+    # no-store: ao religar, a CDN não fica servindo o 404 por 1h.
+    assert headers["Cache-Control"] == "no-store"
+    # CORS no 404: o site precisa ler o status para mostrar "fora do ar".
+    assert headers["Access-Control-Allow-Origin"] == "https://lowpoint-web.vercel.app"
+    assert json.loads(body) == {"erro": "fora do ar"}
+
+
+def test_off_never_serves_memoized_payload(monkeypatch):
+    fetch = CountingFetch()
+    assert painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)[0] == 200
+    monkeypatch.setenv("PAINEL_ENABLED", "false")
+    status, _, body = painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)
+    assert status == 404 and b"produtos" not in body and fetch.calls == 1
+
+
+def test_off_with_query_string_is_still_404(monkeypatch):
+    monkeypatch.setenv("PAINEL_ENABLED", "false")
+    assert painel.handle_painel("GET", "/api/painel?x=1", now=NOW, fetch=CountingFetch())[0] == 404
+
+
+def test_on_is_200():
+    fetch = CountingFetch()
+    assert painel.handle_painel("GET", "/api/painel", now=NOW, fetch=fetch)[0] == 200
+    assert fetch.calls == 1
+
+
 @pytest.mark.parametrize("path", ["/api/painel?x=1", "/api/painel?", "/api/painel?_=123"])
 def test_any_query_string_is_400_without_touching_the_db(path):
     fetch = CountingFetch()

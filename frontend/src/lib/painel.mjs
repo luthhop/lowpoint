@@ -1,6 +1,30 @@
 // Lógica pura da /ao-vivo (testada em tests/painel.test.mjs). Preços chegam
 // como string decimal do /api/painel; números só para desenhar o gráfico.
 
+// Interruptor PAINEL_ENABLED (projeto lowpoint): desligado, o /api/painel
+// responde 404. O site não tem a env; decide pelo status da resposta.
+export const OFF_MESSAGE = 'Vitrine fora do ar no momento.';
+
+export async function loadPainel(fetchFn, url) {
+  try {
+    const r = await fetchFn(url);
+    if (r.status === 404) return { status: 'fora' };
+    if (!r.ok) return { status: 'erro' };
+    return { status: 'ok', data: await r.json() };
+  } catch {
+    return { status: 'erro' };
+  }
+}
+
+// Landing: só mostra o bloco-chamada com o painel no ar. HEAD não baixa o JSON.
+export async function painelOnline(fetchFn, url) {
+  try {
+    return (await fetchFn(url, { method: 'HEAD' })).ok;
+  } catch {
+    return false;
+  }
+}
+
 // Mesmo eixo de tempo em todos os cartões. Eixo final: da B0 (14/11 14:50 BRT)
 // ao fim da PÓS-BF (08/12 00:00 BRT), igual à análise. Até a BF acabar
 // (28/11 00:00 BRT) o eixo termina no fim da BF, para a série não virar um

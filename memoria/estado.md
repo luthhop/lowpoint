@@ -10,11 +10,11 @@
 ## Web
 - Landing publicada: https://lowpoint-web.vercel.app (projeto lowpoint-web, raiz frontend). Vitrine + beta por convite
 - Termos ML (17/11): landing, README e bot conformes e publicados (7ecc137): nome só no aviso 4.1 do rodapé; /ao-vivo conforme no grupo do painel (5.2 indisponível, 5.3 frequência)
-- Painel ao vivo (15/11, COMMIT LOCAL, SEM PUSH — Lucas confere os Termos de Desenvolvedores do ML antes de publicar preços):
+- Painel ao vivo (Lucas decidiu publicar em 18/11; push no main atrás do interruptor PAINEL_ENABLED=true no projeto lowpoint; desligado = 404 sem banco, /ao-vivo "Vitrine fora do ar no momento.", landing sem bloco-chamada):
   - GET /api/painel (lowpoint/painel.py, api/painel.py, vercel.json): 20 da allowlist, READ ONLY, cache 1h CDN, memo 5 min
   - /ao-vivo/: Ink/Muted, sem veredito, "referência fecha em 17/11" até a B0 fechar; landing com subtítulo, bloco-chamada e reforço
   - Local: scripts/painel_local.py + npm run dev. Deploy: VITE_PAINEL_URL=https://lowpoint-theta.vercel.app/api/painel no lowpoint-web
 ## Próximo
-- Lucas decide sobre os Termos do ML → push/deploy do painel (fora de :40–:50)
+- Lucas cria PAINEL_ENABLED=true (lowpoint) e VITE_PAINEL_URL (lowpoint-web) e faz o redeploy: lowpoint primeiro, depois lowpoint-web (fora de :40–:50)
 - Passar /ao-vivo pelo Paper; divergências em memoria/design/landing-divergencias-v11.md
 - Reativar LG 32" (watch 1)? Animações; dashboard pós-BF

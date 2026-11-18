@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { bfLabel, cardView, formatBRL, formatWhen, groupByCategory, sparkline } from '../lib/painel.mjs';
+import { bfLabel, cardView, formatBRL, formatWhen, groupByCategory, loadPainel, OFF_MESSAGE, sparkline } from '../lib/painel.mjs';
+import { PAINEL_URL } from '../lib/painel-url';
 
 // Contrato de GET /api/painel (memoria/design/painel-ao-vivo.md). Preços em string decimal.
 type Produto = {
@@ -13,12 +14,7 @@ type Painel = {
   produtos: Produto[];
 };
 type Grupo = { categoria: string; produtos: Produto[] };
-type State = { status: 'carregando' } | { status: 'ok'; data: Painel } | { status: 'erro' };
-
-// Produção: VITE_PAINEL_URL=https://lowpoint-theta.vercel.app/api/painel nas
-// variáveis do projeto lowpoint-web (ver README). Em dev, o Vite faz proxy de /api/painel.
-const PAINEL_URL: string = import.meta.env.VITE_PAINEL_URL
-  ?? (import.meta.env.DEV ? '/api/painel' : 'https://lowpoint-theta.vercel.app/api/painel');
+type State = { status: 'carregando' } | { status: 'ok'; data: Painel } | { status: 'erro' } | { status: 'fora' };
 const REPOSITORY = 'https://github.com/luthhop/lowpoint';
 const PREREG_TAG = 'https://github.com/luthhop/lowpoint/blob/pre-registro-v1/memoria/analise/plano-pre-registro.md';
 const PREREG_EMENDAS = 'https://github.com/luthhop/lowpoint/blob/main/memoria/analise/plano-pre-registro.md#emendas';
@@ -79,10 +75,7 @@ export default function AoVivo() {
   const [state, setState] = useState<State>({ status: 'carregando' });
   useEffect(() => {
     let alive = true;
-    fetch(PAINEL_URL)
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((data: Painel) => alive && setState({ status: 'ok', data }))
-      .catch(() => alive && setState({ status: 'erro' }));
+    loadPainel(fetch, PAINEL_URL).then(s => { if (alive) setState(s as State); });
     return () => { alive = false; };
   }, []);
 
@@ -98,6 +91,7 @@ export default function AoVivo() {
       <p className="live-notice">Sem veredito ao vivo: o detector de pico precisa de 14 dias de histórico, e o veredito oficial sai na análise de dezembro.</p>
       {state.status === 'carregando' && <p className="live-meta mono" role="status">Carregando os preços…</p>}
       {state.status === 'erro' && <p className="live-late mono" role="status">Não deu para carregar os preços agora.</p>}
+      {state.status === 'fora' && <p className="live-late mono" role="status">{OFF_MESSAGE}</p>}
       {state.status === 'ok' && <Body data={state.data} />}
       <footer className="live-method">
         <p className="eyebrow">Método</p>

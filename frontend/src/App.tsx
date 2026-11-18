@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { PriceChart } from './components/PriceChart';
 import { useRevealMotion } from './hooks/useMotion';
+import { painelOnline } from './lib/painel.mjs';
+import { PAINEL_URL } from './lib/painel-url';
 import { discountPercent, formatPrice } from './lib/price-curve.mjs';
 import demo from './data/demo-history.json';
 
@@ -145,8 +147,18 @@ const questions = [
   ['Você ganha comissão se eu comprar?', 'Hoje não há links de afiliado. A regra do projeto é que uma comissão nunca influencie o veredito.'],
 ];
 
+// Só aparece com o painel no ar (interruptor PAINEL_ENABLED no projeto lowpoint).
+// Começa escondido para nunca chamar para uma vitrine desligada. Sem data-reveal:
+// monta depois do useRevealMotion, que já observou a página e não o veria.
 function LiveCallout() {
-  return <section className="live-callout section-pad" aria-labelledby="live-callout-title"><div className="container live-callout-inner" data-reveal><div><p className="eyebrow">Vitrine / preços reais</p><h2 id="live-callout-title">Os preços reais, agora.</h2><p>20 produtos vigiados de hora em hora, com a referência de antes da Black Friday.</p></div><a className="button" href="/ao-vivo/">Ver a vitrine ao vivo<span className="link-arrow" aria-hidden="true">→</span></a></div></section>;
+  const [online, setOnline] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    painelOnline(fetch, PAINEL_URL).then(ok => { if (alive) setOnline(ok); });
+    return () => { alive = false; };
+  }, []);
+  if (!online) return null;
+  return <section className="live-callout section-pad" aria-labelledby="live-callout-title"><div className="container live-callout-inner"><div><p className="eyebrow">Vitrine / preços reais</p><h2 id="live-callout-title">Os preços reais, agora.</h2><p>20 produtos vigiados de hora em hora, com a referência de antes da Black Friday.</p></div><a className="button" href="/ao-vivo/">Ver a vitrine ao vivo<span className="link-arrow" aria-hidden="true">→</span></a></div></section>;
 }
 
 function FAQ() {

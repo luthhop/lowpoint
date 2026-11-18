@@ -42,8 +42,9 @@ Navegação por âncoras; links externos para o GitHub; FAQ com `details`/`summa
 Segunda página do build (`ao-vivo/index.html`, `src/ao-vivo/`), lida de `GET /api/painel` no projeto `lowpoint` (o bot), não neste projeto.
 
 - **Produção:** no projeto `lowpoint-web` da Vercel, em Settings → Environment Variables, criar `VITE_PAINEL_URL` = `https://lowpoint-theta.vercel.app/api/painel` (Production; Preview só se o CORS liberar a origem do preview). O Vite grava o valor no bundle durante o build, então a mudança só vale depois de um novo deploy. Sem a variável, o build de produção usa esse mesmo endereço.
+- **Interruptor:** no projeto `lowpoint`, `PAINEL_ENABLED` = `true` liga a vitrine. Qualquer outro valor (ou sem a variável) faz o `/api/painel` responder 404 sem consultar o banco (`no-store`, com CORS); a `/ao-vivo` mostra "Vitrine fora do ar no momento." e a landing esconde o bloco-chamada (consulta por HEAD). Ligar e desligar exige redeploy só do `lowpoint`; o site decide pelo status e não precisa de build novo.
 - **CORS:** o endpoint responde `Access-Control-Allow-Origin: https://lowpoint-web.vercel.app` (variável `PAINEL_ALLOWED_ORIGIN` no projeto `lowpoint`). Outro domínio do site exige mudar essa variável.
-- **Local:** na raiz, `python scripts/painel_local.py` (Neon em READ ONLY, porta 8787); aqui, `npm run dev` faz proxy de `/api/painel`. Prévia: http://127.0.0.1:5173/ao-vivo/.
+- **Local:** na raiz, `python scripts/painel_local.py` (Neon em READ ONLY, porta 8787; ligado por padrão, `PAINEL_ENABLED=false` simula desligado); aqui, `npm run dev` faz proxy de `/api/painel`. Prévia: http://127.0.0.1:5173/ao-vivo/.
 
 ## Escopo e publicação
 

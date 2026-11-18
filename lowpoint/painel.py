@@ -187,10 +187,21 @@ def _json(obj) -> bytes:
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
+def painel_enabled() -> bool:
+    """Interruptor da vitrine: só "true" exato (env PAINEL_ENABLED no projeto lowpoint)."""
+    return os.environ.get("PAINEL_ENABLED") == "true"
+
+
 def handle_painel(method: str, path: str, *, now: datetime | None = None,
                   fetch: Callable[[], PainelData] = fetch_from_db) -> tuple[int, dict, bytes]:
     now = now or datetime.now(timezone.utc)
     base = {"Content-Type": "application/json; charset=utf-8"}
+    cors = {"Access-Control-Allow-Origin": os.environ.get("PAINEL_ALLOWED_ORIGIN", DEFAULT_ORIGIN)}
+    if not painel_enabled():
+        # Interruptor desligado: 404 antes de qualquer consulta (nem memo).
+        # no-store para a CDN não segurar o 404 depois de religar; CORS para o
+        # site conseguir ler o status e mostrar "fora do ar".
+        return 404, {**base, **cors, "Cache-Control": "no-store"}, _json({"erro": "fora do ar"})
     if method not in ("GET", "HEAD"):
         return 405, {**base, "Allow": "GET, HEAD", "Cache-Control": "no-store"}, _json({"erro": "método"})
     if "?" in path:
@@ -208,9 +219,5 @@ def handle_painel(method: str, path: str, *, now: datetime | None = None,
             return 503, {**base, "Cache-Control": "no-store"}, _json({"erro": "indisponível"})
         _memo.update(at=now, body=body)
 
-    headers = {
-        **base,
-        "Cache-Control": CACHE_OK,
-        "Access-Control-Allow-Origin": os.environ.get("PAINEL_ALLOWED_ORIGIN", DEFAULT_ORIGIN),
-    }
+    headers = {**base, "Cache-Control": CACHE_OK, **cors}
     return 200, headers, b"" if method == "HEAD" else body
