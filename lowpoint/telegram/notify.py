@@ -9,6 +9,11 @@ from lowpoint.antispam import Decision, should_send
 from lowpoint.best_offer import BestOfferResult, _has_warranty
 from lowpoint.db import SessionLocal
 from lowpoint.models import Alert, PriceHistory, Product, Watch
+from lowpoint.target_suggestion import (
+    format_suggestion,
+    suggest_target,
+    suggestion_buttons,
+)
 from lowpoint.telegram.formatter import AlertContext, AlertMessage, format_alert
 from lowpoint.verdict import PricePoint, VerdictResult, compute_verdict
 
@@ -42,6 +47,26 @@ def _send_message(
         return True
     except Exception:
         log.exception("Falha ao enviar alerta para chat %d", chat_id)
+        return False
+
+
+def _send_suggestion(
+    bot_token: str, chat_id: int, text: str, buttons: list[list[dict]]
+) -> bool:
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "reply_markup": {"inline_keyboard": buttons},
+    }
+    try:
+        resp = requests.post(
+            f"{_API}/bot{bot_token}/sendMessage", json=payload, timeout=10
+        )
+        resp.raise_for_status()
+        return True
+    except Exception:
+        log.exception("Falha ao enviar sugestão de alvo para chat %d", chat_id)
         return False
 
 
@@ -117,27 +142,32 @@ def send_alerts_after_collect(
 
         verdict = compute_verdict(price, original_price, history, now)
 
+        to_alert = watches
         if verdict.verdict == "neutro":
-            watches = [
+            # Neutro só sai com alvo atingido; watch sem alvo nunca entra aqui.
+            to_alert = [
                 w for w in watches
-                if price <= Decimal(str(w.target_price))
+                if w.target_price is not None
+                and price <= Decimal(str(w.target_price))
             ]
-            if not watches:
+            if not to_alert:
                 log.info(
                     "Veredito neutro sem target_hit para %s (R$ %s). Pulando.",
                     product.catalog_product_id, price,
                 )
-                return
-            log.info(
-                "Veredito neutro com target_hit para %s (R$ %s).",
-                product.catalog_product_id, price,
-            )
+            else:
+                log.info(
+                    "Veredito neutro com target_hit para %s (R$ %s).",
+                    product.catalog_product_id, price,
+                )
 
-        for watch in watches:
+        for watch in to_alert:
             _process_watch(
                 session, bot_token, watch, product, best, verdict, price, original_price,
                 offer_count=offer_count, now=now,
             )
+
+        _offer_target_suggestions(session, bot_token, watches, product, history, now)
 
         session.commit()
     except Exception:
@@ -163,7 +193,9 @@ def _process_watch(
     if watch.silent:  # defesa extra: silencioso nunca alerta
         return
     name = watch.nickname or product.title
-    target = Decimal(str(watch.target_price))
+    target = (
+        Decimal(str(watch.target_price)) if watch.target_price is not None else None
+    )
 
     suspects = best.suspect_offers
     cheapest_suspect = (
@@ -218,3 +250,30 @@ def _process_watch(
             "Alerta %s enviado para chat %d (watch %d, R$ %s)",
             msg.alert_type, watch.chat_id, watch.id, price,
         )
+
+
+def _offer_target_suggestions(
+    session, bot_token: str, watches: list[Watch], product: Product,
+    history: list[PricePoint], now: datetime,
+) -> None:
+    """Sugestão de alvo: uma vez por watch sem alvo, com ≥7 dias de histórico.
+    Não é alerta: não grava em alerts nem passa pelo anti-spam."""
+    pending = [
+        w for w in watches
+        if w.target_price is None and w.target_suggested_at is None and not w.silent
+    ]
+    if not pending:
+        return
+    suggestion = suggest_target(history, now)
+    if suggestion is None:
+        return
+    for watch in pending:
+        name = watch.nickname or product.title
+        text = format_suggestion(name, suggestion)
+        buttons = suggestion_buttons(watch.id, suggestion)
+        if _send_suggestion(bot_token, watch.chat_id, text, buttons):
+            watch.target_suggested_at = now
+            session.flush()
+            log.info(
+                "Sugestão de alvo %s enviada (watch %d)", suggestion.target, watch.id
+            )

@@ -15,6 +15,6 @@
 - Lucas quer animações com mais impacto — ritmo etiqueta → histórico → SEGURA → desconto real → alerta
 - Web = vitrine + beta por convite. No main (15/11): CTAs "Ver o código"/"Quero testar" (t.me/lowpointbr_bot?start=beta), PODE IR novo, FAQ (conta, alertas, beta), elipse presa ao −40%; bot com pedido de convite
 ## Próximo
-- PRÓXIMO: conferir deploy da landing e do webhook; divergências restantes em memoria/design/landing-divergencias-v11.md
+- /adicionar <link> [alvo] [apelido] + watch sem alvo + sugestão de alvo após 7 dias: aprovado 18/11, migração b7c8d9e0f1a2 aplicada no Neon (12:52), push no origin/main. /lista conta dias da 1ª coleta. Watches (18/11 12:51): 2 PS5 e 23 Tab S10 Lite normais; 4 e 5 reativados como silent (19 silenciosos). Lacuna de coleta em decisoes.md
 - Análise BF: pré-registro v1 + Emendas 1 (deal_ids+tags desde 15/11 09:45:29) e 2 (P5, exclusão por cobertura, P3 nos 18). Código em analysis/ (python -m analysis.report; deps em requirements-analysis.txt)
 - Decidir sobre reativar LG 32" (watch 1, inativo desde 09/11; agora cabe, 3/20); animações; dashboard pós-BF

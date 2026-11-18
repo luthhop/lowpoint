@@ -1,14 +1,17 @@
 import json
 import logging
 import re
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
+from html import escape
 from statistics import median as _median
 
-from lowpoint.config import MAX_WATCHES_PER_CHAT
+from lowpoint.config import MAX_WATCHES_PER_CHAT, MIN_MONITORING_DAYS
 from lowpoint.db import SessionLocal
 from lowpoint.models import PriceHistory, Product, Watch
 from lowpoint.register import extract_catalog_id, register_product
 from lowpoint.best_offer import select_best_offer
+from lowpoint.telegram.adicionar import parse_adicionar
 from lowpoint.telegram.beta import handle_outsider
 from lowpoint.telegram.formatter import _dias, fmt_brl
 from lowpoint.telegram.security import (
@@ -69,16 +72,17 @@ def _reply(chat_id: int, text: str, **extra) -> dict:
 
 
 def _cmd_adicionar(chat_id: int, text: str) -> dict:
-    parts = text.split(maxsplit=3)
-    if len(parts) < 3:
+    parsed = parse_adicionar(text)
+    if not parsed.url:
         return _reply(
             chat_id,
-            "Uso: /adicionar <link> <alvo> [apelido]\n\n"
-            "Exemplo:\n"
+            "Uso: /adicionar <link> [alvo] [apelido]\n\n"
+            "Exemplos:\n"
+            "/adicionar mercadolivre.com.br/p/MLB57081243\n"
             "/adicionar mercadolivre.com.br/p/MLB57081243 3500 PS5",
         )
 
-    url_arg = parts[1]
+    url_arg = parsed.url
     if not url_arg.startswith("http"):
         url_arg = "https://" + url_arg
 
@@ -91,14 +95,8 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
             "mercadolivre.com.br/p/MLB12345678",
         )
 
-    try:
-        target = Decimal(parts[2].replace(",", "."))
-        if target <= 0:
-            raise InvalidOperation
-    except (InvalidOperation, ArithmeticError):
-        return _reply(chat_id, f"Preço-alvo inválido: {parts[2]}")
-
-    nickname = parts[3].strip() if len(parts) > 3 else None
+    target = parsed.target
+    nickname = parsed.nickname
 
     session = SessionLocal()
     try:
@@ -137,6 +135,11 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
         title = None
     display_name = nickname or title or catalog_id
 
+    if target is None and watch.target_price is not None:
+        target = Decimal(str(watch.target_price))  # alvo mantido (re-adicionar sem alvo)
+    if target is None:
+        return _reply(chat_id, _confirm_sem_alvo(display_name, live, product.id))
+
     lines = [
         f"Pronto. Monitorando:\n",
         f"<b>{display_name}</b>",
@@ -155,6 +158,40 @@ def _cmd_adicionar(chat_id: int, text: str) -> dict:
     lines.append("\nTe aviso quando chegar lá.")
 
     return _reply(chat_id, "\n".join(lines))
+
+
+def _confirm_sem_alvo(display_name: str, live: dict, product_id: int) -> str:
+    head = f"<b>{escape(display_name)}</b> adicionado. "
+    if live.get("price"):
+        head += f"Preço atual: {fmt_brl(live['price'])}."
+    else:
+        head += "Preço chega na próxima coleta."
+
+    days = _history_days(product_id)
+    left = MIN_MONITORING_DAYS - days
+    if left > 0:
+        when = f"Começo a dar veredito em {_dias(left)}."
+    else:
+        when = f"Já tenho {_dias(days)} de histórico, então o veredito já vale."
+    return f"{head}\n\nSem alvo: te aviso quando o desconto for de verdade. {when}"
+
+
+def _history_days(product_id: int) -> int:
+    """Dias de histórico disponível, como o veredito conta (monitoring_days)."""
+    session = SessionLocal()
+    try:
+        first = (
+            session.query(PriceHistory.collected_at)
+            .filter(PriceHistory.product_id == product_id, PriceHistory.available.is_(True))
+            .order_by(PriceHistory.collected_at)
+            .first()
+        )
+    finally:
+        session.close()
+    if not first:
+        return 0
+    earliest = first[0] if first[0].tzinfo else first[0].replace(tzinfo=timezone.utc)
+    return max((datetime.now(timezone.utc) - earliest).days, 0)
 
 
 def _fetch_live_price(catalog_id: str, product: Product) -> dict:
@@ -227,7 +264,11 @@ def _cmd_lista(chat_id: int) -> dict:
         lines = ["Teus produtos:\n"] if watches else []
         for i, w in enumerate(watches, 1):
             name = w.nickname or w.product.title
-            target = fmt_brl(Decimal(str(w.target_price)))
+            target = (
+                f"Alvo: {fmt_brl(Decimal(str(w.target_price)))}"
+                if w.target_price is not None
+                else "sem alvo"
+            )
 
             last = (
                 session.query(PriceHistory)
@@ -240,15 +281,25 @@ def _cmd_lista(chat_id: int) -> dict:
             )
             price_str = fmt_brl(Decimal(str(last.price))) if last else "—"
 
-            days = (
-                (last.collected_at - w.created_at).days
-                if last
-                else 0
+            # Desde a primeira coleta real do produto (não do created_at do watch,
+            # que pode ser posterior ao histórico e dar dias negativos).
+            first = (
+                session.query(PriceHistory.collected_at)
+                .filter(
+                    PriceHistory.product_id == w.product_id,
+                    PriceHistory.available.is_(True),
+                )
+                .order_by(PriceHistory.collected_at)
+                .first()
             )
+            days = 0
+            if first:
+                start = first[0] if first[0].tzinfo else first[0].replace(tzinfo=timezone.utc)
+                days = max((datetime.now(timezone.utc) - start).days, 0)
             since = "desde hoje" if days == 0 else f"há {_dias(days)}"
             lines.append(
                 f"{i}. <b>{name}</b>\n"
-                f"   Agora: {price_str} · Alvo: {target}\n"
+                f"   Agora: {price_str} · {target}\n"
                 f"   Monitorando {since}"
             )
 
@@ -367,6 +418,10 @@ def _handle_callback(callback: dict) -> dict:
         return _do_remove(chat_id, callback_id, data)
     if data.startswith("nick:"):
         return _handle_nick_callback(chat_id, callback_id, data)
+    if data.startswith("alvo_nao:"):
+        return _decline_target(chat_id, callback_id, data)
+    if data.startswith("alvo:"):
+        return _accept_target(chat_id, callback_id, data)
 
     return {"method": "answerCallbackQuery", "callback_query_id": callback_id}
 
@@ -432,3 +487,42 @@ def _do_remove(chat_id: int, callback_id: str, data: str) -> dict:
         return _reply(chat_id, "Erro ao remover. Tenta de novo.")
     finally:
         session.close()
+
+
+def _accept_target(chat_id: int, callback_id: str, data: str) -> dict:
+    """Botão "Usar R$ Z" da sugestão de alvo: alvo:<watch_id>:<centavos>."""
+    try:
+        _, watch_id, cents = data.split(":")
+        watch_id, cents = int(watch_id), int(cents)
+        if cents <= 0:
+            raise ValueError
+    except ValueError:
+        return {"method": "answerCallbackQuery", "callback_query_id": callback_id}
+    target = Decimal(cents) / 100
+
+    session = SessionLocal()
+    try:
+        watch = (
+            session.query(Watch)
+            .filter(Watch.id == watch_id, Watch.chat_id == chat_id, Watch.active.is_(True))
+            .first()
+        )
+        if not watch:
+            return _reply(chat_id, "Produto não encontrado.")
+        watch.target_price = target
+        session.commit()
+        return _reply(chat_id, f"Alvo definido: <b>{fmt_brl(target)}</b>. Te aviso quando bater.")
+    except Exception:
+        session.rollback()
+        return _reply(chat_id, "Erro ao definir o alvo. Tenta de novo.")
+    finally:
+        session.close()
+
+
+def _decline_target(chat_id: int, callback_id: str, data: str) -> dict:
+    """Botão "Agora não": nada muda; target_suggested_at já impede nova pergunta."""
+    try:
+        int(data.split(":")[1])
+    except (IndexError, ValueError):
+        return {"method": "answerCallbackQuery", "callback_query_id": callback_id}
+    return _reply(chat_id, "Beleza, sigo sem alvo. Te aviso só quando o desconto for de verdade.")

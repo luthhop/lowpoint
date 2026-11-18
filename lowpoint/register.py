@@ -23,9 +23,12 @@ def extract_catalog_id(url: str) -> str | None:
 
 def register_product(
     catalog_id: str,
-    target_price: Decimal,
+    target_price: Decimal | None,
     chat_id: int = DEFAULT_CHAT_ID,
 ) -> tuple[Product, Watch]:
+    """target_price None = sem alvo. Num watch ativo e não silencioso que já tem
+    alvo, None mantém o alvo (re-adicionar sem alvo não apaga o do usuário).
+    Silencioso (alvo provisório de análise) ou removido recomeça sem alvo."""
     session = SessionLocal()
     try:
         product = (
@@ -48,7 +51,9 @@ def register_product(
             .first()
         )
         if watch:
-            watch.target_price = target_price
+            keep = target_price is None and watch.active and not watch.silent
+            if not keep:
+                watch.target_price = target_price
             watch.active = True
         else:
             watch = Watch(

@@ -39,7 +39,7 @@ class AlertContext:
     item_id: str
     price: Decimal
     original_price: Decimal | None
-    target_price: Decimal
+    target_price: Decimal | None  # None = watch sem alvo
     verdict: str
     reason: str
     lowest_price: Decimal | None
@@ -142,7 +142,8 @@ def _recovered_hike_note(ctx: AlertContext) -> list[str]:
 
 
 def format_alert(ctx: AlertContext) -> AlertMessage:
-    target_hit = ctx.price <= ctx.target_price
+    # Sem alvo nunca é target_hit: só PODE IR (real) e SEGURA (maquiado).
+    target_hit = ctx.target_price is not None and ctx.price <= ctx.target_price
 
     if target_hit and ctx.verdict == "maquiado":
         return _format_target_hit_maquiado(ctx)

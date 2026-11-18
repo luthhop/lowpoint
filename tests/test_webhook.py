@@ -269,6 +269,10 @@ class TestListaPlural:
         product, watch = _seed(db_session)
         now = datetime.now(timezone.utc)
         watch.created_at = now - timedelta(days=1)
+        db_session.add(PriceHistory(  # primeira coleta, junto com o watch
+            product_id=product.id, price=Decimal("3800.00"), item_id="MLB123",
+            seller_id=1, available=True, collected_at=now - timedelta(days=1),
+        ))
         db_session.add(PriceHistory(
             product_id=product.id,
             price=Decimal("3800.00"),
@@ -293,6 +297,10 @@ class TestListaPlural:
         product, watch = _seed(db_session)
         now = datetime.now(timezone.utc)
         watch.created_at = now - timedelta(days=10)
+        db_session.add(PriceHistory(  # primeira coleta, junto com o watch
+            product_id=product.id, price=Decimal("3800.00"), item_id="MLB123",
+            seller_id=1, available=True, collected_at=now - timedelta(days=10),
+        ))
         db_session.add(PriceHistory(
             product_id=product.id,
             price=Decimal("3800.00"),
